@@ -1,0 +1,2699 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>קומונה</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;800&family=Suez+One&family=Frank+Ruhl+Libre:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  --solid: #f7f9f4; --ink: #1b2a24; --ink-2: #4d5d55; --panel: rgba(248, 250, 245, .95); --panel-2: #e9efe5;
+  --line: rgba(27, 42, 36, .16); --accent: #1d7a5b; --accent-ink: #ffffff; --danger: #c1412d; --gold: #b8871c;
+  --shadow: 0 8px 28px rgba(8, 30, 24, .28);
+  --f-display: "Suez One", Georgia, "Times New Roman", serif;
+  --f-body: "Assistant", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --c-avo: #4f8a2b; --c-stone: #9a9a92; --c-metal: #5f7f99; --c-horse: #a9713a; --c-hay: #d9a93a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --solid: #15201c; --ink: #e9f0ea; --ink-2: #a7b7ad; --panel: rgba(21, 32, 28, .94); --panel-2: #24352f;
+    --line: rgba(233, 240, 234, .16); --accent: #5ccb9d; --accent-ink: #0b1e17; --danger: #ff7a63; --gold: #e6b84a;
+    --shadow: 0 8px 28px rgba(0, 0, 0, .55);
+  }
+}
+:root[data-theme="dark"] {
+  --solid: #15201c; --ink: #e9f0ea; --ink-2: #a7b7ad; --panel: rgba(21, 32, 28, .94); --panel-2: #24352f;
+  --line: rgba(233, 240, 234, .16); --accent: #5ccb9d; --accent-ink: #0b1e17; --danger: #ff7a63; --gold: #e6b84a;
+  --shadow: 0 8px 28px rgba(0, 0, 0, .55);
+}
+*, *::before, *::after { box-sizing: inherit; }
+html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body {
+  background: #9fd0e0; color: var(--ink); font-family: var(--f-body); font-size: 15px;
+  -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
+}
+#gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.hidden { display: none !important; }
+
+/* ---------- HUD ---------- */
+#hud { position: fixed; inset: 0; pointer-events: none; }
+#top {
+  position: absolute; top: 0; left: 0; right: 0;
+  padding: calc(env(safe-area-inset-top, 0px) + 8px) 8px 0;
+}
+#players { display: flex; gap: 6px; overflow-x: auto; pointer-events: auto; scrollbar-width: none; padding-bottom: 2px; }
+#players::-webkit-scrollbar { display: none; }
+.pcard {
+  flex: 1 1 0; min-width: 96px; background: linear-gradient(165deg, color-mix(in srgb, var(--panel) 92%, white 8%), var(--panel));
+  border-radius: 12px; padding: 5px 9px 6px; border: 1.5px solid color-mix(in srgb, var(--pc) 55%, var(--line));
+  border-inline-start: 6px solid var(--pc);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.4), inset 0 -8px 14px -10px color-mix(in srgb, var(--pc) 35%, transparent);
+  position: relative; transition: box-shadow .2s, outline-color .2s;
+}
+.pcard.turn { outline: 2.5px solid var(--pc); outline-offset: 1px; box-shadow: var(--shadow), 0 0 0 5px color-mix(in srgb, var(--pc) 22%, transparent), inset 0 1px 0 rgba(255,255,255,.4); }
+.pcard .nm { font-weight: 800; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 96px; }
+.pcard .vp { font-family: var(--f-display); font-size: 25px; line-height: 1; margin-top: 1px; }
+.pcard .vp small { font-family: var(--f-body); font-size: 11px; color: var(--ink-2); font-weight: 600; margin-inline-start: 3px; }
+.pcard .st { font-size: 11.5px; color: var(--ink-2); white-space: nowrap; margin-top: 2px; letter-spacing: -.1px; }
+.badge { display: inline-block; background: var(--gold); color: #fff; border-radius: 6px; font-size: 10px; font-weight: 800; padding: 0 4px; margin-inline-start: 2px; }
+#statusbar { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+#status {
+  flex: 1; pointer-events: auto; background: var(--panel); border-radius: 12px; padding: 8px 12px;
+  font-weight: 700; font-size: 14px; box-shadow: var(--shadow); min-height: 38px; display: flex; align-items: center;
+}
+#dice { display: flex; gap: 5px; pointer-events: auto; }
+.die { width: 38px; height: 38px; background: #fbf7ea; border-radius: 9px; box-shadow: var(--shadow), inset 0 -3px 0 rgba(0,0,0,.12); transition: transform .5s cubic-bezier(.34,1.56,.64,1); will-change: transform; }
+@media (prefers-reduced-motion: reduce) { .die { transition: none; } }
+#ticker {
+  margin-top: 6px; pointer-events: auto; font-size: 12.5px; color: #10231c; background: rgba(255,255,255,.72);
+  border-radius: 9px; padding: 4px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+}
+#fabs { display: flex; gap: 8px; margin-top: 6px; pointer-events: auto; }
+.fab {
+  width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25);
+  background: linear-gradient(155deg, color-mix(in srgb, var(--panel) 90%, white 10%), var(--panel));
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.5); font-size: 19px; display: grid; place-items: center;
+  transition: transform .15s, box-shadow .15s;
+}
+.fab:active { transform: scale(.94); }
+.fab.on { background: linear-gradient(155deg, color-mix(in srgb, var(--accent) 85%, white 15%), var(--accent)); color: var(--accent-ink); }
+
+#bottom {
+  position: absolute; left: 0; right: 0; bottom: 0; pointer-events: auto;
+  padding: 10px 10px calc(env(safe-area-inset-bottom, 0px) + 10px);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 94%, white 6%), var(--panel));
+  border-radius: 20px 20px 0 0; box-shadow: 0 -8px 30px rgba(8, 30, 24, .28), inset 0 1.5px 0 rgba(255,255,255,.5);
+  border-top: 1px solid color-mix(in srgb, var(--accent) 18%, var(--line));
+}
+#hand { display: flex; gap: 6px; }
+.chip {
+  flex: 1 1 0; min-width: 0; background: linear-gradient(165deg, color-mix(in srgb, var(--panel-2) 90%, white 10%), var(--panel-2));
+  border-radius: 11px; padding: 4px 2px 3px; text-align: center;
+  border-bottom: 3.5px solid var(--rc, var(--line)); position: relative; border-top: 0; border-inline: 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 2px 5px rgba(8,30,24,.12);
+}
+.chip .ic { font-size: 19px; line-height: 1.1; display: block; }
+.chip .n { font-family: var(--f-display); font-size: 21px; line-height: 1; display: block; }
+.chip .rt { position: absolute; top: 1px; left: 3px; font-size: 9.5px; font-weight: 800; color: var(--accent); }
+.chip.dev { --rc: var(--gold); }
+.chip.dev.dot::after { content: ""; position: absolute; top: 3px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
+#actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+#hint { width: 100%; font-size: 13px; color: var(--ink-2); font-weight: 600; padding: 2px 2px 0; }
+.btn {
+  flex: 1 1 calc(33% - 6px); min-width: 0; min-height: 46px; border-radius: 12px; border: 1.5px solid var(--line);
+  background: linear-gradient(165deg, color-mix(in srgb, var(--panel-2) 92%, white 8%), var(--panel-2));
+  font-weight: 800; font-size: 14px; padding: 4px 8px; line-height: 1.15;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 2px 5px rgba(8,30,24,.14);
+  transition: transform .12s, box-shadow .12s;
+}
+.btn small { font-size: 11px; font-weight: 600; color: var(--ink-2); letter-spacing: 1px; }
+.btn.pri {
+  background: linear-gradient(165deg, color-mix(in srgb, var(--accent) 80%, white 20%), var(--accent));
+  color: var(--accent-ink); border-color: transparent;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 3px 10px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.btn.pri small { color: inherit; opacity: .85; }
+.btn.warn { background: linear-gradient(165deg, color-mix(in srgb, var(--danger) 80%, white 20%), var(--danger)); color: #fff; border-color: transparent; }
+.btn.dim, .btn:disabled { opacity: .45; box-shadow: none; }
+.btn.armed { outline: 3px solid var(--gold); outline-offset: 1px; }
+.btn:active { transform: translateY(1.5px) scale(.985); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 1px 2px rgba(8,30,24,.14); }
+.btn:focus-visible, .fab:focus-visible, .chip:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.btn.wide { flex-basis: 100%; }
+
+#toast {
+  z-index: 60; position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(170px + env(safe-area-inset-bottom, 0px));
+  background: rgba(20, 30, 26, .93); color: #fff; padding: 9px 15px; border-radius: 12px; font-weight: 700; font-size: 14px;
+  max-width: 88vw; text-align: center; pointer-events: none; opacity: 0; transition: opacity .2s;
+}
+#toast.show { opacity: 1; }
+
+/* ---------- Sheets ---------- */
+#sheetWrap { position: fixed; inset: 0; background: rgba(6, 20, 16, 0); display: flex; align-items: flex-end; z-index: 35; transition: background .28s ease; }
+#sheetWrap.show { background: rgba(6, 20, 16, .45); }
+#sheetWrap #sheet { transform: translateY(100%); transition: transform .32s cubic-bezier(.22,1,.36,1); }
+#sheetWrap.show #sheet { transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) { #sheetWrap, #sheetWrap #sheet { transition: none; } }
+#sheet {
+  width: 100%; max-height: 82%; overflow-y: auto; background: var(--solid); border-radius: 22px 22px 0 0; padding: 16px 14px calc(env(safe-area-inset-bottom, 0px) + 16px);
+  box-shadow: var(--shadow); -webkit-overflow-scrolling: touch;
+}
+#sheet h2 { font-family: var(--f-display); font-weight: 400; font-size: 23px; margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center; }
+#sheet h3 { font-size: 14px; margin: 14px 0 6px; color: var(--ink-2); }
+#sheet .x { border: 0; background: var(--panel-2); width: 34px; height: 34px; border-radius: 50%; font-size: 16px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.grow { flex: 1; min-width: 0; }
+.rlist { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.rbtn { border: 2px solid transparent; background: var(--panel-2); border-radius: 12px; padding: 7px 2px; text-align: center; border-bottom: 4px solid var(--rc); }
+.rbtn .ic { font-size: 22px; display: block; }
+.rbtn .n { font-family: var(--f-display); font-size: 17px; display: block; }
+.rbtn small { font-size: 10.5px; color: var(--ink-2); font-weight: 700; display: block; }
+.rbtn.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--panel-2)); }
+.rbtn:disabled { opacity: .35; }
+.stepper { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.stp { background: var(--panel-2); border-radius: 12px; padding: 5px 2px; text-align: center; border-bottom: 4px solid var(--rc); }
+.stp .ic { font-size: 19px; }
+.stp .v { font-family: var(--f-display); font-size: 21px; display: block; line-height: 1.1; }
+.stp .pm { display: flex; }
+.stp .pm button { flex: 1; border: 0; background: transparent; font-size: 22px; font-weight: 800; height: 36px; color: var(--accent); }
+.stp .pm button:disabled { opacity: .25; }
+.tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+.tab { flex: 1; min-height: 40px; border-radius: 10px; border: 0; background: var(--panel-2); font-weight: 800; }
+.tab.sel { background: var(--accent); color: var(--accent-ink); }
+.dev-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
+.dev-item .t { flex: 1; }
+.dev-item .t b { display: block; }
+.dev-item .t span { font-size: 12.5px; color: var(--ink-2); }
+.log-line { padding: 6px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.cost-row { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--line); font-weight: 700; }
+.cost-row span:last-child { letter-spacing: 2px; }
+.note { font-size: 13px; color: var(--ink-2); line-height: 1.45; }
+textarea, input[type=text] {
+  width: 100%; font: inherit; color: var(--ink); background: var(--panel-2); border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 11px; user-select: text; -webkit-user-select: text;
+}
+textarea { min-height: 96px; resize: none; direction: ltr; font-size: 12px; }
+
+/* ---------- Lobby / overlays ---------- */
+.overlay {
+  position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 18px;
+  background: radial-gradient(120% 90% at 50% 0%, #3aa0bf 0%, #1f6f93 55%, #164a66 100%); overflow-y: auto;
+}
+.overlay.soft { background: rgba(9, 24, 19, .82); }
+.lobby { width: 100%; max-width: 420px; color: #f6f8f2; }
+.lobby h1 { font-family: var(--f-display); font-weight: 400; font-size: 52px; margin: 6px 0 0; letter-spacing: .5px; }
+.lobby p.sub { margin: 4px 0 16px; font-size: 16px; opacity: .92; line-height: 1.4; }
+.lobby .logo { width: 150px; height: auto; display: block; }
+.card { background: var(--panel); color: var(--ink); border-radius: 18px; padding: 14px; margin-top: 10px; box-shadow: var(--shadow); }
+.card h3 { margin: 0 0 8px; font-size: 16px; }
+.seg { display: flex; gap: 6px; margin: 6px 0 10px; }
+.seg button { flex: 1; min-height: 42px; border-radius: 10px; border: 2px solid transparent; background: var(--panel-2); font-weight: 800; }
+.seg button.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--panel-2)); }
+.field { margin: 6px 0; display: flex; align-items: center; gap: 8px; }
+.field i { width: 14px; height: 14px; border-radius: 50%; flex: none; border: 2px solid rgba(0,0,0,.18); }
+.check { display: flex; gap: 8px; align-items: center; font-size: 14px; margin: 8px 0; }
+.check input { width: 20px; height: 20px; accent-color: var(--accent); }
+#curtain { z-index: 45; }
+#curtain h2 { font-family: var(--f-display); font-weight: 400; font-size: 34px; margin: 0 0 6px; }
+#curtain { text-align: center; color: #fff; flex-direction: column; }
+.win { text-align: center; }
+.win .trophy { font-size: 64px; }
+.win h2 { font-family: var(--f-display); font-weight: 400; font-size: 34px; margin: 4px 0; }
+.scoreline { display: flex; justify-content: space-between; padding: 7px 0; border-top: 1px solid var(--line); font-weight: 700; }
+.err { color: var(--danger); font-weight: 700; font-size: 13.5px; }
+@media (min-width: 720px) {
+  #bottom { left: 50%; right: auto; transform: translateX(-50%); width: 640px; border-radius: 20px 20px 0 0; }
+  #sheet { max-width: 560px; margin: 0 auto; border-radius: 22px; margin-bottom: 20px; }
+  #players { justify-content: center; }
+  .pcard { max-width: 170px; }
+}
+
+#errbar { position: fixed; top: 0; left: 0; right: 0; z-index: 90; background: #b3261e; color: #fff; font: 11px/1.3 monospace; direction: ltr; padding: 3px 6px; pointer-events: none; }
+
+/* ---------- אייקונים ---------- */
+svg.ic { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; }
+.bl { display: inline-flex; align-items: center; gap: 6px; }
+.btn small { display: inline-flex; align-items: center; gap: 1px; letter-spacing: 0; }
+.btn small .ic { width: 14px; height: 14px; vertical-align: 0; }
+.chip .ic { display: block; width: 25px; height: 25px; margin: 0 auto 2px; font-size: inherit; line-height: 1; }
+.chip.dev { color: var(--gold); }
+.chip.dev .n { color: var(--ink); }
+.rbtn .ic { display: block; width: 28px; height: 28px; margin: 0 auto 2px; }
+.stp .ic { display: block; width: 26px; height: 26px; margin: 0 auto; }
+.pcard .st { display: flex; align-items: center; gap: 2px; }
+.pcard .st .ic { width: 13px; height: 13px; vertical-align: 0; margin-inline-start: 6px; }
+.pcard .st .ic:first-child { margin-inline-start: 0; }
+.badge { display: inline-flex; align-items: center; gap: 1px; vertical-align: 3px; }
+.badge .ic { width: 10px; height: 10px; vertical-align: 0; }
+.sic { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; background: var(--accent); color: var(--accent-ink); margin-inline-end: 9px; flex: none; }
+.sic .ic { width: 17px; height: 17px; vertical-align: 0; }
+#status { line-height: 1.25; }
+.devic { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--panel-2); color: var(--accent); flex: none; }
+.devic .ic { width: 24px; height: 24px; vertical-align: 0; }
+.cost-row span:first-child { display: inline-flex; align-items: center; gap: 8px; }
+.cost-row span:last-child { display: inline-flex; gap: 3px; letter-spacing: 0; }
+.cost-row span:last-child .ic { width: 22px; height: 22px; vertical-align: 0; }
+.win .trophy { color: var(--gold); }
+.win .trophy .ic { width: 64px; height: 64px; }
+.fab .ic { width: 22px; height: 22px; vertical-align: 0; }
+#toast .ic { width: 18px; height: 18px; vertical-align: -4px; margin: 0 2px; }
+.rbtn small, .stp small { display: block; }
+
+/* ---------- צ'אט ---------- */
+#chatBody { max-height: 44vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 2px 0; }
+.chat-msg { background: var(--panel-2); border-radius: 12px; padding: 7px 10px; max-width: 86%; align-self: flex-start; }
+.chat-msg.me { align-self: flex-end; background: color-mix(in srgb, var(--accent) 22%, var(--panel-2)); }
+.chat-msg b { display: block; font-size: 11.5px; margin-bottom: 1px; }
+.chat-msg span { font-size: 14.5px; line-height: 1.35; white-space: pre-wrap; word-break: break-word; }
+#chatIn { flex: 1; }
+
+/* ---------- כרטיס הקדשה ---------- */
+.card.ded { background: linear-gradient(165deg, #fff6e0, #ffe9c2); border: 1.5px solid #e7c478; }
+.card.ded h3 { color: #7a5416; font-family: "Frank Ruhl Libre", var(--f-display); font-weight: 900; font-size: 19px; }
+.card.ded .x { border: 0; background: rgba(0,0,0,.08); width: 30px; height: 30px; border-radius: 50%; font-size: 14px; flex: none; color: #5c4418; }
+.ded-msg {
+  margin-top: 8px; font-family: "Frank Ruhl Libre", serif; font-weight: 700; font-size: 18.5px; line-height: 1.55;
+  color: #4a330c; text-align: center;
+}
+
+</style>
+</head>
+<body>
+<canvas id="gl" aria-label="לוח המשחק"></canvas>
+
+<div id="hud">
+  <div id="top">
+    <div id="players"></div>
+    <div id="statusbar"><div id="status"></div><div id="dice" aria-label="קוביות"></div></div>
+    <div id="ticker" data-act="log"></div>
+    <div id="fabs">
+      <button class="fab" data-act="rot" aria-label="סובב את הלוח"></button>
+      <button class="fab" data-act="costs" aria-label="מחירון">📋</button>
+      <button class="fab" data-act="menu" aria-label="תפריט">☰</button>
+    </div>
+  </div>
+  <div id="bottom">
+    <div id="hand"></div>
+    <div id="actions"></div>
+  </div>
+</div>
+
+<div id="errbar" class="hidden"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="sheetWrap" class="hidden"><div id="sheet"></div></div>
+<div id="lobby" class="overlay"></div>
+<div id="winner" class="overlay soft hidden"></div>
+<div id="curtain" class="overlay soft hidden"></div>
+
+<script>
+/* ===== ENGINE: חוקי המשחק (כמו קטאן) ===== */
+(function (root) {
+'use strict';
+
+const RES = ['avo', 'stone', 'metal', 'horse', 'hay'];
+const COST = {
+  road:    { avo: 1, stone: 1 },
+  house:   { avo: 1, stone: 1, metal: 1, horse: 1 },
+  commune: { avo: 2, stone: 3 },
+  dev:     { stone: 1, hay: 1, horse: 1 },
+};
+const LIMITS = { road: 15, house: 5, commune: 4 };
+const DEV_COUNTS = { knight: 14, vp: 5, roads: 2, plenty: 2, monopoly: 2 };
+const TERRAIN = [
+  'avo', 'avo', 'avo', 'avo',
+  'horse', 'horse', 'horse', 'horse',
+  'hay', 'hay', 'hay', 'hay',
+  'stone', 'stone', 'stone',
+  'metal', 'metal', 'metal',
+  'desert',
+];
+const NUMBERS = [2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12];
+const RES_NAME = { avo: 'אבוקדו', stone: 'אבן', metal: 'מתכת', horse: 'כבשה', hay: 'חציר' };
+const DEV_NAME = { knight: 'אביר', vp: 'נקודת ניצחון', roads: 'בניית דרכים', plenty: 'בחירת 2 משאבים', monopoly: 'מונופול' };
+
+/* ---------- גאומטריה קבועה של הלוח ---------- */
+function buildGeo() {
+  const SQ3 = Math.sqrt(3);
+  const hexes = [];
+  for (let r = -2; r <= 2; r++) {
+    for (let q = -2; q <= 2; q++) {
+      if (Math.abs(q + r) > 2) continue;
+      hexes.push({ q, r, x: SQ3 * (q + r / 2), z: 1.5 * r });
+    }
+  }
+  const verts = [], edges = [];
+  const vmap = new Map(), emap = new Map();
+  const vkey = (x, z) => Math.round(x * 100) + ',' + Math.round(z * 100);
+  hexes.forEach((h, hi) => {
+    h.v = []; h.e = []; h.nb = [];
+    for (let i = 0; i < 6; i++) {
+      const a = (60 * i - 30) * Math.PI / 180;
+      const x = h.x + Math.cos(a), z = h.z + Math.sin(a);
+      const k = vkey(x, z);
+      let id = vmap.get(k);
+      if (id === undefined) {
+        id = verts.length; vmap.set(k, id);
+        verts.push({ id, x, z, hexes: [], edges: [], adj: [] });
+      }
+      verts[id].hexes.push(hi);
+      h.v.push(id);
+    }
+    for (let i = 0; i < 6; i++) {
+      const a = h.v[i], b = h.v[(i + 1) % 6];
+      const k = a < b ? a + '-' + b : b + '-' + a;
+      let id = emap.get(k);
+      if (id === undefined) {
+        id = edges.length; emap.set(k, id);
+        edges.push({ id, a: Math.min(a, b), b: Math.max(a, b), hexes: [] });
+        verts[a].edges.push(id); verts[b].edges.push(id);
+        verts[a].adj.push(b); verts[b].adj.push(a);
+      }
+      edges[id].hexes.push(hi);
+      h.e.push(id);
+    }
+  });
+  edges.forEach((E) => {
+    E.x = (verts[E.a].x + verts[E.b].x) / 2;
+    E.z = (verts[E.a].z + verts[E.b].z) / 2;
+    if (E.hexes.length === 2) {
+      hexes[E.hexes[0]].nb.push(E.hexes[1]);
+      hexes[E.hexes[1]].nb.push(E.hexes[0]);
+    }
+  });
+  const coast = edges.filter((E) => E.hexes.length === 1)
+    .sort((A, B) => Math.atan2(A.z, A.x) - Math.atan2(B.z, B.x))
+    .map((E) => E.id);
+  return { hexes, verts, edges, coast };
+}
+const GEO = buildGeo();
+
+/* ---------- עזרים ---------- */
+function shuffle(arr, rnd) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  }
+  return arr;
+}
+const clone = (o) => JSON.parse(JSON.stringify(o));
+const emptyRes = () => ({ avo: 0, stone: 0, metal: 0, horse: 0, hay: 0 });
+const total = (res) => RES.reduce((s, r) => s + (res[r] || 0), 0);
+const canAfford = (res, cost) => RES.every((r) => (res[r] || 0) >= (cost[r] || 0));
+const randId = () => Math.random().toString(36).slice(2, 9);
+
+/* ---------- יצירת משחק ---------- */
+function newGame(names, rnd) {
+  rnd = rnd || Math.random;
+  const n = names.length;
+  // פיזור אקראי: מספר המשבצות מכל משאב משתנה (2 עד 5), ומיקום המדבר אקראי
+  const cnt = [4, 4, 4, 3, 3];
+  for (let i = 0; i < 6; i++) {
+    const a = Math.floor(rnd() * 5), b = Math.floor(rnd() * 5);
+    if (a !== b && cnt[a] < 5 && cnt[b] > 2) { cnt[a]++; cnt[b]--; }
+  }
+  const kinds = ['avo', 'horse', 'hay', 'stone', 'metal'];
+  const terrList = ['desert'];
+  kinds.forEach((k, i) => { for (let j = 0; j < cnt[i]; j++) terrList.push(k); });
+  // פיזור הגיוני: משתדלים שלא יהיו שני משבצות מאותו משאב צמודות זו לזו
+  let terr = null, bestTerr = null, bestBad = 1e9;
+  for (let tries = 0; tries < 4000; tries++) {
+    const cand = shuffle(terrList.slice(), rnd);
+    let bad = 0;
+    for (let i = 0; i < 19; i++) {
+      for (const j of GEO.hexes[i].nb) if (j > i && cand[j] === cand[i] && cand[i] !== 'desert') bad++;
+    }
+    if (bad < bestBad) { bestBad = bad; bestTerr = cand; }
+    if (bad === 0) break;
+  }
+  terr = bestTerr;
+  let assign = null;
+  for (let tries = 0; tries < 500; tries++) {
+    const nums = shuffle(NUMBERS.slice(), rnd);
+    let k = 0;
+    const cand = terr.map((t) => (t === 'desert' ? 0 : nums[k++]));
+    let ok = true;
+    for (let i = 0; i < 19 && ok; i++) {
+      if (cand[i] === 6 || cand[i] === 8) {
+        for (const j of GEO.hexes[i].nb) if (cand[j] === 6 || cand[j] === 8) { ok = false; break; }
+      }
+    }
+    assign = cand;
+    if (ok) break;
+  }
+  const hexes = terr.map((t, i) => ({ type: t, num: assign[i] }));
+
+  const off = Math.floor(rnd() * GEO.coast.length);
+  const steps = shuffle([4, 4, 4, 3, 3, 3, 3, 3, 3], rnd);
+  const ptypes = shuffle(['any', 'any', 'any', 'any', 'avo', 'stone', 'metal', 'horse', 'hay'], rnd);
+  const ports = [];
+  let pos = off;
+  steps.forEach((s, i) => {
+    ports.push({ e: GEO.coast[pos % GEO.coast.length], type: ptypes[i] });
+    pos += s;
+  });
+
+  const deck = [];
+  Object.keys(DEV_COUNTS).forEach((k) => { for (let i = 0; i < DEV_COUNTS[k]; i++) deck.push(k); });
+  shuffle(deck, rnd);
+
+  const order = [];
+  for (let i = 0; i < n; i++) order.push(i);
+  for (let i = n - 1; i >= 0; i--) order.push(i);
+
+  const st = {
+    v: 1, id: randId(), rev: 0, n,
+    players: names.map((name, i) => ({
+      name, color: i, res: emptyRes(), dev: [], newDev: [], knights: 0,
+    })),
+    hexes, ports,
+    robber: terr.indexOf('desert'),
+    vo: {}, eo: {},
+    bank: { avo: 19, stone: 19, metal: 19, horse: 19, hay: 19 },
+    deck,
+    phase: 'setup_house', turn: 0,
+    setup: { order, idx: 0 }, setupLast: -1,
+    dice: null, rollN: 0, turnNo: 0,
+    discard: {}, ret: 'main', rb: 0, devPlayed: false,
+    trade: null,
+    longest: { p: -1, len: 0 }, army: { p: -1, n: 0 }, lens: names.map(() => 0),
+    hot: [], log: ['המשחק התחיל. כל שחקן מציב בית ודרך.'], winner: -1,
+  };
+  return st;
+}
+
+/* ---------- שאילתות מצב ---------- */
+function vertexFree(st, v) {
+  if (st.vo[v]) return false;
+  for (const w of GEO.verts[v].adj) if (st.vo[w]) return false;
+  return true;
+}
+function canRoadAt(st, p, e) {
+  if (st.eo[e] !== undefined) return false;
+  const E = GEO.edges[e];
+  for (const v of [E.a, E.b]) {
+    const o = st.vo[v];
+    if (o) {
+      if (o.p === p) return true;
+      continue; // בניין של יריב חוסם
+    }
+    for (const e2 of GEO.verts[v].edges) if (e2 !== e && st.eo[e2] === p) return true;
+  }
+  return false;
+}
+function canHouseAt(st, p, v) {
+  if (!vertexFree(st, v)) return false;
+  for (const e of GEO.verts[v].edges) if (st.eo[e] === p) return true;
+  return false;
+}
+function pieces(st, p) {
+  let roads = 0, house = 0, commune = 0;
+  for (const k in st.eo) if (st.eo[k] === p) roads++;
+  for (const k in st.vo) if (st.vo[k].p === p) { if (st.vo[k].c) commune++; else house++; }
+  return { road: roads, house, commune };
+}
+function legalRoads(st, p) {
+  const out = [];
+  GEO.edges.forEach((E) => { if (canRoadAt(st, p, E.id)) out.push(E.id); });
+  return out;
+}
+function legalHouses(st, p) {
+  const out = [];
+  GEO.verts.forEach((V) => { if (canHouseAt(st, p, V.id)) out.push(V.id); });
+  return out;
+}
+function legalCommunes(st, p) {
+  const out = [];
+  for (const k in st.vo) if (st.vo[k].p === p && !st.vo[k].c) out.push(+k);
+  return out;
+}
+function setupHouses(st) {
+  const out = [];
+  GEO.verts.forEach((V) => { if (vertexFree(st, V.id)) out.push(V.id); });
+  return out;
+}
+function setupRoads(st) {
+  const v = st.setupLast;
+  return GEO.verts[v].edges.filter((e) => st.eo[e] === undefined);
+}
+function ratios(st, p) {
+  const r = {};
+  RES.forEach((x) => { r[x] = 4; });
+  st.ports.forEach((pt) => {
+    const E = GEO.edges[pt.e];
+    const own = [E.a, E.b].some((v) => st.vo[v] && st.vo[v].p === p);
+    if (!own) return;
+    if (pt.type === 'any') RES.forEach((x) => { r[x] = Math.min(r[x], 3); });
+    else r[pt.type] = Math.min(r[pt.type], 2);
+  });
+  return r;
+}
+function robberVictims(st, h, me) {
+  const set = {};
+  GEO.hexes[h].v.forEach((v) => {
+    const o = st.vo[v];
+    if (o && o.p !== me && total(st.players[o.p].res) > 0) set[o.p] = true;
+  });
+  return Object.keys(set).map(Number);
+}
+function roadLen(st, p) {
+  const at = {};
+  for (const k in st.eo) {
+    if (st.eo[k] !== p) continue;
+    const e = +k, E = GEO.edges[e];
+    (at[E.a] = at[E.a] || []).push(e);
+    (at[E.b] = at[E.b] || []).push(e);
+  }
+  let best = 0;
+  const used = new Set();
+  function dfs(v, len) {
+    if (len > best) best = len;
+    const o = st.vo[v];
+    if (o && o.p !== p && len > 0) return;
+    for (const e of (at[v] || [])) {
+      if (used.has(e)) continue;
+      used.add(e);
+      const E = GEO.edges[e];
+      dfs(E.a === v ? E.b : E.a, len + 1);
+      used.delete(e);
+    }
+  }
+  Object.keys(at).forEach((v) => dfs(+v, 0));
+  return best;
+}
+function vpOf(st, p, hidden) {
+  let v = 0;
+  for (const k in st.vo) if (st.vo[k].p === p) v += st.vo[k].c ? 2 : 1;
+  if (st.longest.p === p) v += 2;
+  if (st.army.p === p) v += 2;
+  if (hidden) {
+    const P = st.players[p];
+    v += P.dev.concat(P.newDev).filter((c) => c === 'vp').length;
+  }
+  return v;
+}
+function activePlayers(st) {
+  if (st.phase === 'over') return [];
+  if (st.phase === 'discard') return Object.keys(st.discard).map(Number);
+  return [st.turn];
+}
+
+/* ---------- עדכון פרסים ---------- */
+function updateAwards(st) {
+  const lens = st.players.map((_, p) => roadLen(st, p));
+  st.lens = lens;
+  const best = Math.max.apply(null, lens);
+  let holder = st.longest.p;
+  if (best >= 5) {
+    if (holder >= 0 && lens[holder] === best) { /* נשאר */ }
+    else {
+      const top = [];
+      lens.forEach((l, p) => { if (l === best) top.push(p); });
+      holder = top.length === 1 ? top[0] : -1;
+    }
+  } else holder = -1;
+  if (holder !== st.longest.p && holder >= 0) st.log.push(st.players[holder].name + ' קיבל את הדרך הארוכה ביותר (' + lens[holder] + ')');
+  st.longest = { p: holder, len: holder >= 0 ? lens[holder] : 0 };
+
+  const kn = st.players.map((P) => P.knights);
+  const mx = Math.max.apply(null, kn);
+  let ah = st.army.p;
+  if (mx >= 3 && !(ah >= 0 && kn[ah] === mx)) {
+    const top = [];
+    kn.forEach((k, p) => { if (k === mx) top.push(p); });
+    if (top.length === 1) ah = top[0];
+  }
+  if (ah !== st.army.p && ah >= 0) st.log.push(st.players[ah].name + ' קיבל את הצבא הגדול ביותר (' + kn[ah] + ')');
+  st.army = { p: ah, n: ah >= 0 ? kn[ah] : 0 };
+}
+
+function checkWin(st) {
+  if (st.phase === 'over' || st.phase.indexOf('setup') === 0) return;
+  const p = st.turn;
+  if (vpOf(st, p, true) >= 10) {
+    st.phase = 'over';
+    st.winner = p;
+    st.log.push(st.players[p].name + ' ניצח!');
+  }
+}
+
+/* ---------- ייצור משאבים ---------- */
+function produce(st, sum) {
+  const gains = st.players.map(() => emptyRes());
+  st.hot = [];
+  GEO.hexes.forEach((h, hi) => {
+    const H = st.hexes[hi];
+    if (H.num !== sum || H.type === 'desert' || hi === st.robber) return;
+    st.hot.push(hi);
+    for (const v of h.v) {
+      const o = st.vo[v];
+      if (o) gains[o.p][H.type] += o.c ? 2 : 1;
+    }
+  });
+  const got = st.players.map(() => emptyRes());
+  RES.forEach((r) => {
+    const tot = gains.reduce((s, g) => s + g[r], 0);
+    if (tot === 0) return;
+    if (tot <= st.bank[r]) {
+      gains.forEach((g, p) => { got[p][r] = g[r]; });
+    } else {
+      const who = [];
+      gains.forEach((g, p) => { if (g[r] > 0) who.push(p); });
+      if (who.length === 1) got[who[0]][r] = Math.min(gains[who[0]][r], st.bank[r]);
+    }
+  });
+  const parts = [];
+  got.forEach((g, p) => {
+    if (total(g) === 0) return;
+    RES.forEach((r) => {
+      st.players[p].res[r] += g[r];
+      st.bank[r] -= g[r];
+    });
+    parts.push(st.players[p].name + ': ' + RES.filter((r) => g[r]).map((r) => g[r] + ' ' + RES_NAME[r]).join(', '));
+  });
+  st.log.push(parts.length ? 'הפקה — ' + parts.join(' | ') : 'אף אחד לא קיבל משאבים.');
+}
+
+function pay(st, p, cost) {
+  const P = st.players[p];
+  RES.forEach((r) => {
+    const c = cost[r] || 0;
+    P.res[r] -= c; st.bank[r] += c;
+  });
+}
+function give(st, p, r, n) {
+  st.players[p].res[r] += n; st.bank[r] -= n;
+}
+function beginRobber(st, ret) {
+  st.ret = ret;
+  st.phase = 'robber';
+}
+
+/* ---------- הפעלת פעולה ---------- */
+function apply(st0, a) {
+  const st = clone(st0);
+  const fail = (m) => ({ ok: false, err: m });
+  if (st.phase === 'over') return fail('המשחק נגמר');
+  const me = st.turn;
+  const P = st.players[me];
+  const N = st.players.length;
+  const nm = (p) => st.players[p].name;
+  const isNum = (x) => typeof x === 'number' && isFinite(x);
+
+  switch (a.t) {
+    /* ----- שלב הצבה ----- */
+    case 'house': {
+      if (st.phase === 'setup_house') {
+        if (!isNum(a.v) || !GEO.verts[a.v] || !vertexFree(st, a.v)) return fail('אי אפשר לבנות שם');
+        st.vo[a.v] = { p: me, c: 0 };
+        st.setupLast = a.v;
+        if (st.setup.idx >= N) {
+          GEO.verts[a.v].hexes.forEach((h) => {
+            const t = st.hexes[h].type;
+            if (t !== 'desert' && st.bank[t] > 0) give(st, me, t, 1);
+          });
+        }
+        st.phase = 'setup_road';
+        st.log.push(nm(me) + ' הציב בית');
+        break;
+      }
+      if (st.phase !== 'main') return fail('עכשיו לא ניתן לבנות');
+      if (!isNum(a.v) || !GEO.verts[a.v]) return fail('מקום לא חוקי');
+      if (!canAfford(P.res, COST.house)) return fail('אין מספיק משאבים');
+      if (pieces(st, me).house >= LIMITS.house) return fail('נגמרו הבתים (5)');
+      if (!canHouseAt(st, me, a.v)) return fail('אי אפשר לבנות שם');
+      pay(st, me, COST.house);
+      st.vo[a.v] = { p: me, c: 0 };
+      st.log.push(nm(me) + ' בנה בית');
+      updateAwards(st); // בית יכול לחסום דרך של יריב
+      break;
+    }
+    case 'road': {
+      if (!isNum(a.e) || !GEO.edges[a.e]) return fail('מקום לא חוקי');
+      if (st.phase === 'setup_road') {
+        if (st.eo[a.e] !== undefined || GEO.verts[st.setupLast].edges.indexOf(a.e) < 0) return fail('הדרך חייבת להיות צמודה לבית שהצבת');
+        st.eo[a.e] = me;
+        st.log.push(nm(me) + ' הציב דרך');
+        st.setup.idx++;
+        if (st.setup.idx >= st.setup.order.length) {
+          st.phase = 'roll'; st.turn = 0; st.setup = null; st.setupLast = -1; st.turnNo = 1;
+          st.log.push('ההצבה הסתיימה. ' + nm(0) + ' פותח.');
+        } else {
+          st.turn = st.setup.order[st.setup.idx];
+          st.phase = 'setup_house';
+        }
+        break;
+      }
+      if (st.phase === 'roadbuild') {
+        if (!canRoadAt(st, me, a.e)) return fail('אי אפשר לבנות שם');
+        if (pieces(st, me).road >= LIMITS.road) return fail('נגמרו הדרכים');
+        st.eo[a.e] = me;
+        st.rb--;
+        st.log.push(nm(me) + ' בנה דרך (קלף)');
+        updateAwards(st);
+        if (st.rb <= 0 || pieces(st, me).road >= LIMITS.road || legalRoads(st, me).length === 0) { st.phase = st.ret; st.rb = 0; }
+        break;
+      }
+      if (st.phase !== 'main') return fail('עכשיו לא ניתן לבנות');
+      if (!canAfford(P.res, COST.road)) return fail('אין מספיק משאבים');
+      if (pieces(st, me).road >= LIMITS.road) return fail('נגמרו הדרכים (15)');
+      if (!canRoadAt(st, me, a.e)) return fail('אי אפשר לבנות שם');
+      pay(st, me, COST.road);
+      st.eo[a.e] = me;
+      st.log.push(nm(me) + ' בנה דרך');
+      updateAwards(st);
+      break;
+    }
+    case 'commune': {
+      if (st.phase !== 'main') return fail('עכשיו לא ניתן לבנות');
+      const o = st.vo[a.v];
+      if (!o || o.p !== me || o.c) return fail('צריך לשדרג בית שלך');
+      if (!canAfford(P.res, COST.commune)) return fail('אין מספיק משאבים');
+      if (pieces(st, me).commune >= LIMITS.commune) return fail('נגמרו הקומונות (4)');
+      pay(st, me, COST.commune);
+      o.c = 1;
+      st.log.push(nm(me) + ' שדרג בית לקומונה');
+      break;
+    }
+
+    /* ----- קוביות ----- */
+    case 'roll': {
+      if (st.phase !== 'roll') return fail('כבר הטלת קוביות');
+      const d = a.d;
+      if (!d || d.length !== 2 || d.some((x) => !(x >= 1 && x <= 6))) return fail('קוביות לא חוקיות');
+      const sum = d[0] + d[1];
+      st.dice = [d[0], d[1]];
+      st.rollN++;
+      st.hot = [];
+      st.log.push(nm(me) + ' הטיל ' + sum);
+      if (sum === 7) {
+        st.discard = {};
+        st.players.forEach((Q, p) => {
+          const t = total(Q.res);
+          if (t > 7) st.discard[p] = Math.floor(t / 2);
+        });
+        if (Object.keys(st.discard).length) st.phase = 'discard';
+        else beginRobber(st, 'main');
+        st.ret = 'main';
+      } else {
+        produce(st, sum);
+        st.phase = 'main';
+      }
+      break;
+    }
+    case 'discard': {
+      if (st.phase !== 'discard') return fail('אין צורך בזריקה');
+      const q = a.p;
+      if (st.discard[q] === undefined) return fail('אין לך מה לזרוק');
+      const res = a.res || {};
+      let s = 0;
+      for (const r of RES) {
+        const c = res[r] || 0;
+        if (!Number.isInteger(c) || c < 0 || c > st.players[q].res[r]) return fail('בחירה לא חוקית');
+        s += c;
+      }
+      if (s !== st.discard[q]) return fail('צריך לזרוק בדיוק ' + st.discard[q]);
+      RES.forEach((r) => { const c = res[r] || 0; st.players[q].res[r] -= c; st.bank[r] += c; });
+      st.log.push(nm(q) + ' זרק ' + s + ' קלפים');
+      delete st.discard[q];
+      if (!Object.keys(st.discard).length) { st.phase = 'robber'; st.ret = 'main'; }
+      break;
+    }
+    case 'robber': {
+      if (st.phase !== 'robber') return fail('עכשיו לא מזיזים שודד');
+      if (!isNum(a.h) || a.h < 0 || a.h > 18 || a.h === st.robber) return fail('חייבים להזיז למשבצת אחרת');
+      const vic = robberVictims(st, a.h, me);
+      let victim = -1;
+      if (vic.length === 1) victim = vic[0];
+      else if (vic.length > 1) {
+        if (vic.indexOf(a.victim) < 0) return fail('בחר ממי לגנוב');
+        victim = a.victim;
+      }
+      st.robber = a.h;
+      st.log.push(nm(me) + ' הזיז את השודד');
+      if (victim >= 0) {
+        const cards = [];
+        RES.forEach((r) => { for (let i = 0; i < st.players[victim].res[r]; i++) cards.push(r); });
+        const r = cards[Math.min(cards.length - 1, Math.floor((a.r || 0) * cards.length))];
+        st.players[victim].res[r]--;
+        P.res[r]++;
+        st.log.push(nm(me) + ' גנב קלף מ-' + nm(victim));
+        st.stolen = { from: victim, to: me, res: r, n: (st.stolen ? st.stolen.n : 0) + 1 };
+      }
+      st.phase = st.ret;
+      break;
+    }
+
+    /* ----- קלפים מיוחדים ----- */
+    case 'buy_dev': {
+      if (st.phase !== 'main') return fail('עכשיו לא ניתן לקנות');
+      if (!st.deck.length) return fail('הקלפים נגמרו');
+      if (!canAfford(P.res, COST.dev)) return fail('אין מספיק משאבים');
+      pay(st, me, COST.dev);
+      P.newDev.push(st.deck.pop());
+      st.log.push(nm(me) + ' קנה קלף מיוחד');
+      break;
+    }
+    case 'play_dev': {
+      if (st.phase !== 'roll' && st.phase !== 'main') return fail('עכשיו לא ניתן לשחק קלף');
+      if (st.devPlayed) return fail('כבר שיחקת קלף בתור הזה');
+      const i = P.dev.indexOf(a.card);
+      if (i < 0 || a.card === 'vp') return fail('אין לך קלף כזה');
+      if (a.card === 'knight') {
+        P.dev.splice(i, 1);
+        P.knights++;
+        st.devPlayed = true;
+        st.log.push(nm(me) + ' שיחק אביר');
+        beginRobber(st, st.phase);
+        updateAwards(st);
+      } else if (a.card === 'roads') {
+        if (pieces(st, me).road >= LIMITS.road || legalRoads(st, me).length === 0) return fail('אין איפה לבנות');
+        P.dev.splice(i, 1);
+        st.devPlayed = true;
+        st.rb = Math.min(2, LIMITS.road - pieces(st, me).road);
+        st.ret = st.phase;
+        st.phase = 'roadbuild';
+        st.log.push(nm(me) + ' שיחק בניית דרכים');
+      } else if (a.card === 'plenty') {
+        if (RES.indexOf(a.a) < 0 || RES.indexOf(a.b) < 0) return fail('בחר 2 משאבים');
+        const need = { avo: 0, stone: 0, metal: 0, horse: 0, hay: 0 };
+        need[a.a]++; need[a.b]++;
+        if (RES.some((r) => need[r] > st.bank[r])) return fail('אין מספיק בבנק');
+        P.dev.splice(i, 1);
+        st.devPlayed = true;
+        give(st, me, a.a, 1); give(st, me, a.b, 1);
+        st.log.push(nm(me) + ' לקח ' + RES_NAME[a.a] + ' ו' + RES_NAME[a.b]);
+      } else if (a.card === 'monopoly') {
+        if (RES.indexOf(a.res) < 0) return fail('בחר משאב');
+        P.dev.splice(i, 1);
+        st.devPlayed = true;
+        let got = 0;
+        st.players.forEach((Q, p) => {
+          if (p === me) return;
+          got += Q.res[a.res]; P.res[a.res] += Q.res[a.res]; Q.res[a.res] = 0;
+        });
+        st.log.push(nm(me) + ' שיחק מונופול על ' + RES_NAME[a.res] + ' וקיבל ' + got);
+      } else return fail('קלף לא מוכר');
+      break;
+    }
+
+    /* ----- סחר ----- */
+    case 'bank_trade': {
+      if (st.phase !== 'main') return fail('אפשר לסחור רק אחרי הטלת קוביות');
+      if (RES.indexOf(a.give) < 0 || RES.indexOf(a.get) < 0 || a.give === a.get) return fail('בחירה לא חוקית');
+      const ratio = ratios(st, me)[a.give];
+      if (P.res[a.give] < ratio) return fail('צריך ' + ratio + ' ' + RES_NAME[a.give]);
+      if (st.bank[a.get] < 1) return fail('אין בבנק ' + RES_NAME[a.get]);
+      P.res[a.give] -= ratio; st.bank[a.give] += ratio;
+      P.res[a.get] += 1; st.bank[a.get] -= 1;
+      st.log.push(nm(me) + ' החליף ' + ratio + ' ' + RES_NAME[a.give] + ' ב-' + RES_NAME[a.get] + ' מול הבנק');
+      break;
+    }
+    case 'offer_trade': {
+      if (st.phase !== 'main') return fail('אפשר לסחור רק אחרי הטלת קוביות');
+      const g = a.give || {}, w = a.get || {};
+      let tg = 0, tw = 0;
+      for (const r of RES) {
+        const x = g[r] || 0, y = w[r] || 0;
+        if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0) return fail('הצעה לא חוקית');
+        if (x > 0 && y > 0) return fail('אי אפשר לתת ולקבל אותו משאב');
+        if (x > P.res[r]) return fail('אין לך מספיק ' + RES_NAME[r]);
+        tg += x; tw += y;
+      }
+      if (!tg || !tw) return fail('צריך לתת ולבקש משהו');
+      const to = a.to === undefined || a.to === null ? -1 : a.to;
+      if (to !== -1 && (to === me || !st.players[to])) return fail('שחקן לא חוקי');
+      st.trade = { from: me, to, give: g, get: w, no: [] };
+      st.log.push(nm(me) + ' הציע סחר');
+      break;
+    }
+    case 'respond_trade': {
+      const T = st.trade;
+      if (!T) return fail('אין הצעה פעילה');
+      const q = a.p;
+      if (q === T.from || !st.players[q] || (T.to !== -1 && T.to !== q)) return fail('ההצעה לא מיועדת לך');
+      if (a.accept) {
+        const Q = st.players[q], F = st.players[T.from];
+        if (!canAfford(Q.res, T.get)) return fail('אין לך מספיק משאבים לסחר הזה');
+        if (!canAfford(F.res, T.give)) { st.trade = null; return fail('המציע כבר לא יכול לספק את ההצעה'); }
+        RES.forEach((r) => {
+          const x = T.give[r] || 0, y = T.get[r] || 0;
+          F.res[r] += y - x; Q.res[r] += x - y;
+        });
+        st.log.push(nm(q) + ' קיבל את הסחר של ' + nm(T.from));
+        st.trade = null;
+      } else {
+        if (T.no.indexOf(q) < 0) T.no.push(q);
+        const elig = T.to === -1 ? N - 1 : 1;
+        if (T.no.length >= elig) { st.log.push('הסחר נדחה'); st.trade = null; }
+      }
+      break;
+    }
+    case 'cancel_trade': {
+      if (!st.trade) return fail('אין הצעה פעילה');
+      st.trade = null;
+      break;
+    }
+
+    /* ----- סיום תור ----- */
+    case 'end_turn': {
+      if (st.phase !== 'main') return fail('צריך להטיל קוביות קודם');
+      P.dev = P.dev.concat(P.newDev); P.newDev = [];
+      st.devPlayed = false;
+      st.trade = null;
+      st.turn = (me + 1) % N;
+      st.phase = 'roll';
+      st.dice = null;
+      st.hot = [];
+      st.turnNo++;
+      st.log.push('התור של ' + nm(st.turn));
+      break;
+    }
+    default:
+      return fail('פעולה לא מוכרת');
+  }
+  if (st.log.length > 80) st.log.splice(0, st.log.length - 80);
+  checkWin(st);
+  st.rev = (st.rev || 0) + 1;
+  return { ok: true, state: st };
+}
+
+const Engine = {
+  GEO, RES, COST, LIMITS, RES_NAME, DEV_NAME,
+  newGame, apply, clone,
+  legalRoads, legalHouses, legalCommunes, setupHouses, setupRoads,
+  canRoadAt, canHouseAt, vertexFree, robberVictims,
+  ratios, pieces, vpOf, activePlayers, roadLen, total, canAfford, emptyRes,
+};
+if (typeof module !== 'undefined' && module.exports) module.exports = Engine;
+else root.Engine = Engine;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* ===== ICONS: סט אייקונים אחיד (SVG) ===== */
+(function () {
+'use strict';
+const B = {
+  avo: '<path d="M12 2.4c3.7 0 5.9 5.2 5.9 9.6 0 5.1-2.7 9.2-5.9 9.2S6.1 17.1 6.1 12c0-4.4 2.2-9.6 5.9-9.6z" fill="#4d7d2a"/>' +
+       '<path d="M12 4.6c2.5 0 4 3.6 4 7.4 0 4-1.7 7-4 7s-4-3-4-7c0-3.8 1.5-7.4 4-7.4z" fill="#d6e58a"/>' +
+       '<circle cx="12" cy="14.3" r="3.1" fill="#7a4a24"/><circle cx="11" cy="13.3" r=".9" fill="#a8703d"/>',
+  stone: '<path d="M3.500 18l1.800-7L9 6l6-1 4.500 4.500L21 17l-4.500 2.500h-9z" fill="#8f8f89"/>' +
+         '<path d="M5.300 11L9 6l6-1-3.500 6z" fill="#c9c9c2"/>' +
+         '<path d="M15 5l4.500 4.500L21 17l-4.500 2.500L11.500 11z" fill="#6f6f69"/>' +
+         '<path d="M11.500 11L7.500 19.500" fill="none" stroke="#5f5f5a" stroke-width="1" stroke-linecap="round"/>',
+  metal: '<path d="M12 2.500l8 4.600-8 4.600-8-4.600z" fill="#c3d0df"/>' +
+         '<path d="M4 7.100l8 4.600v9.800l-8-4.600z" fill="#6d829b"/>' +
+         '<path d="M20 7.100l-8 4.600v9.800l8-4.600z" fill="#465972"/>' +
+         '<path d="M8.800 5.400L12 7.200l3.200-1.800" fill="none" stroke="#eef3f8" stroke-width="1" stroke-linecap="round"/>',
+  horse: '<g fill="#efe8d8"><circle cx="9" cy="10" r="3.600"/><circle cx="13.500" cy="9" r="3.900"/><circle cx="16.700" cy="12" r="3.200"/><circle cx="7" cy="13.500" r="3.200"/><circle cx="12" cy="14" r="4.300"/></g>' +
+         '<ellipse cx="6.300" cy="12.800" rx="2.300" ry="1.700" fill="#3d2f24"/>' +
+         '<g fill="#3d2f24"><rect x="8.300" y="18.500" width="1.500" height="3" rx=".7"/><rect x="13.800" y="18.500" width="1.500" height="3" rx=".7"/></g>' +
+         '<circle cx="5.600" cy="12.300" r=".55" fill="#efe8d8"/>',
+  hay: '<path d="M12 22V8.500" stroke="#a97f1e" stroke-width="1.600" stroke-linecap="round"/>' +
+       '<g fill="#e3b93b"><ellipse cx="12" cy="5" rx="1.700" ry="3"/><ellipse cx="9" cy="9.500" rx="1.500" ry="2.800" transform="rotate(-35 9 9.500)"/><ellipse cx="15" cy="9.500" rx="1.500" ry="2.800" transform="rotate(35 15 9.500)"/><ellipse cx="9" cy="15" rx="1.500" ry="2.800" transform="rotate(-35 9 15)"/><ellipse cx="15" cy="15" rx="1.500" ry="2.800" transform="rotate(35 15 15)"/></g>',
+  road: '<path fill="currentColor" fill-rule="evenodd" d="M9.200 3h5.600l5.700 18H3.500z M11.300 5.600h1.400v2.600h-1.400z M11.300 10.400h1.400v3.200h-1.400z M11.300 15.600h1.400v3.400h-1.400z"/>',
+  house: '<path fill="currentColor" fill-rule="evenodd" d="M12 3L2.500 11.200h2.700V21h13.600v-9.800h2.700z M10 14.500h4V21h-4z"/>',
+  commune: '<path fill="currentColor" fill-rule="evenodd" d="M2 21v-9.500l5.500-4 5.500 4V21z M15 21V8l3.500-3.500L22 8v13z M6 14h3v3H6z M17.500 11h2v2.500h-2z"/>',
+  card: '<path fill="currentColor" fill-rule="evenodd" d="M7.500 3h9A2.500 2.500 0 0 1 19 5.500v13a2.500 2.500 0 0 1-2.500 2.500h-9A2.500 2.500 0 0 1 5 18.500v-13A2.500 2.500 0 0 1 7.500 3z M12 7.500l1.400 3 3.100.4-2.300 2.100.6 3.100-2.800-1.500-2.800 1.500.6-3.100-2.300-2.100 3.100-.4z"/>',
+  shield: '<path fill="currentColor" fill-rule="evenodd" d="M12 2.500l8 2.800v6.200c0 5-3.300 8.800-8 10.500-4.700-1.700-8-5.500-8-10.500V5.300z M11 7.500h2V11h3.500v2H13v3.500h-2V13H7.500v-2H11z"/>',
+  trade: '<path d="M4 8h13l-3.500-3.500M20 16H7l3.500 3.500" fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"/>',
+  chat: '<path fill="currentColor" fill-rule="evenodd" d="M4 4.5h16A1.500 1.500 0 0 1 21.500 6v10A1.500 1.500 0 0 1 20 17.500H9l-4.500 4V17.500H4A1.500 1.500 0 0 1 2.500 16V6A1.500 1.500 0 0 1 4 4.5z"/><circle cx="8" cy="11" r="1.100" fill="#fff"/><circle cx="12" cy="11" r="1.100" fill="#fff"/><circle cx="16" cy="11" r="1.100" fill="#fff"/>',
+  dice: '<path fill="currentColor" fill-rule="evenodd" d="M6.500 3h11A3.500 3.500 0 0 1 21 6.500v11a3.500 3.500 0 0 1-3.500 3.500h-11A3.500 3.500 0 0 1 3 17.500v-11A3.500 3.500 0 0 1 6.500 3z M8 6.800a1.200 1.200 0 1 0 0 2.400 1.200 1.200 0 0 0 0-2.400z M16 6.800a1.200 1.200 0 1 0 0 2.400 1.200 1.200 0 0 0 0-2.400z M12 10.800a1.200 1.200 0 1 0 0 2.400 1.200 1.200 0 0 0 0-2.400z M8 14.800a1.200 1.200 0 1 0 0 2.400 1.200 1.200 0 0 0 0-2.400z M16 14.800a1.200 1.200 0 1 0 0 2.400 1.200 1.200 0 0 0 0-2.400z"/>',
+  layers: '<path d="M12 3l9 4.500-9 4.500-9-4.500z" fill="currentColor"/><path d="M3 12.200l9 4.500 9-4.500M3 16.500l9 4.500 9-4.500" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linejoin="round" stroke-linecap="round"/>',
+  trophy: '<path d="M7 3h10v5.500a5 5 0 0 1-10 0z" fill="currentColor"/><path d="M7 5H4v2.200A3 3 0 0 0 7 10.200M17 5h3v2.200a3 3 0 0 1-3 3" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round"/><path d="M10.500 14h3v3h2.500v3H8v-3h2.500z" fill="currentColor"/>',
+  list: '<path d="M8 6.500h12M8 12h12M8 17.500h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><g fill="currentColor"><circle cx="4" cy="6.500" r="1.300"/><circle cx="4" cy="12" r="1.300"/><circle cx="4" cy="17.500" r="1.300"/></g>',
+  spark: '<path fill="currentColor" d="M12 2l2.200 6.800L21 11l-6.800 2.200L12 20l-2.200-6.800L3 11l6.800-2.200z"/>',
+  crown: '<path fill="currentColor" d="M3 8l4.500 4L12 5l4.500 7L21 8l-2 11H5z"/>',
+  star: '<path fill="currentColor" d="M12 2.500l2.900 6 6.600.9-4.800 4.600 1.200 6.500L12 17.400 6.100 20.500l1.200-6.500L2.500 9.400l6.600-.9z"/>',
+  dunes: '<path d="M2 18c3.500-4.500 6.500-4.500 9.500-1.500s6.500 2 10.500-2.500" fill="none" stroke="#c9ad6e" stroke-width="2" stroke-linecap="round"/><circle cx="16.500" cy="7" r="3" fill="#e9b949"/>',
+  share: '<path d="M12 3v12M7.500 7.500L12 3l4.500 4.500M5 13v6.500h14V13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+  import: '<path d="M12 15V3M7.500 10.500L12 15l4.500-4.500M5 13v6.500h14V13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+  zoom: '<circle cx="10.500" cy="10.500" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 15l5.500 5.500" stroke="currentColor" stroke-width="2.200" stroke-linecap="round"/>',
+  home: '<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+  robber: '<path fill="currentColor" d="M12 2.500a4.500 4.500 0 0 0-4.500 4.500v2L5 20.500h14L16.500 9V7A4.500 4.500 0 0 0 12 2.500z"/>',
+  rotate: '<path d="M20 12a8 8 0 1 1-2.500-5.800M20 4v4.500h-4.500" fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" fill="none"/>',
+  check: '<path d="M5 12.500l4.500 4.500L19 7.500" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/>',
+};
+function I(n) { return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + B[n] + '</svg>'; }
+function uri(n, px) {
+  const s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="' + px + '" height="' + px + '">' + B[n] + '</svg>';
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s);
+}
+window.ICONS = { B, I, uri };
+})();
+
+</script>
+<script>
+/* ===== SCENE 2.5D: לוח בהטיה עם עומק (Canvas, בלי WebGL ובלי ספריות) ===== */
+(function () {
+'use strict';
+const GEO = Engine.GEO;
+const T = 0.22; // עובי משבצת
+const PCOL = ['#d9483b', '#2f6fd6', '#8b5cf6', '#f1efe8'];
+const PDARK = ['#7a1f16', '#163a80', '#452a86', '#8b8676'];
+const PLIGHT = ['#ff8b7d', '#7fb0ff', '#c1a5ff', '#ffffff'];
+const TERR = {
+  avo:    { top: '#4f8a2e', hi: '#8ec85c', side: '#2f5420' },
+  horse:  { top: '#8ebb42', hi: '#c3e278', side: '#587a28' },
+  hay:    { top: '#e0b428', hi: '#ffe172', side: '#a67d18' },
+  stone:  { top: '#8a8d8a', hi: '#c3c6c1', side: '#54564f' },
+  metal:  { top: '#60788f', hi: '#a4c0d6', side: '#3a4e62' },
+  desert: { top: '#e0c382', hi: '#f8e6ae', side: '#ab8c4e' },
+};
+const ICON_NAMES = ['avo', 'stone', 'metal', 'horse', 'hay'];
+
+let cv, ctx, W = 1, H = 1, dpr = 1;
+let st = null;
+let cur = { id: null, roads: {}, builds: {}, robberHex: -1, rollN: -1, init: false };
+let targets = [], selected = null;
+let view = { az: Math.PI / 6, taz: Math.PI / 6, zoom: 1, tzoom: 1, px: 0, py: 0 };
+let scale = 40, cx = 0, cy = 0, tilt = 0.75, ca = 1, sa = 0;
+let robber = { x: 0, z: 0, fx: 0, fz: 0, tx: 0, tz: 0, t0: 0, moving: false };
+let pulses = {};
+let dirty = true, lastDraw = 0, t0Start = performance.now();
+const imgs = {};
+const colCache = {};
+let fx = []; // חלקיקים: ניצוצות הצבה, אבק שודד, ריחוף משאבים
+function spawnRing(x, y, color) { fx.push({ k: 'ring', x, y, c: color, t0: performance.now(), dur: 650 }); }
+function spawnSpark(x, y, color) {
+  for (let i = 0; i < 10; i++) {
+    const a = Math.random() * Math.PI * 2, sp = (0.6 + Math.random() * 0.9) * scale;
+    fx.push({ k: 'spark', x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - scale * 0.4, c: color, t0: performance.now(), dur: 520 + Math.random() * 200 });
+  }
+}
+function spawnDust(x, y) {
+  for (let i = 0; i < 6; i++) {
+    const a = Math.random() * Math.PI * 2, sp = (0.15 + Math.random() * 0.3) * scale;
+    fx.push({ k: 'dust', x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.4 - scale * 0.1, t0: performance.now(), dur: 500 });
+  }
+}
+function spawnFlyIcon(x, y, name, color) {
+  fx.push({ k: 'fly', x, y, name, c: color, t0: performance.now(), dur: 1100, dx: (Math.random() - 0.5) * scale * 0.6 });
+}
+
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const ease = (k) => 1 - Math.pow(1 - k, 3);
+const easeBack = (k) => { const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2); };
+
+function shade(hex, amt) {
+  const key = hex + amt;
+  if (colCache[key]) return colCache[key];
+  const n = parseInt(hex.slice(1), 16);
+  let r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  if (amt >= 0) { r += (255 - r) * amt; g += (255 - g) * amt; b += (255 - b) * amt; }
+  else { r *= 1 + amt; g *= 1 + amt; b *= 1 + amt; }
+  return (colCache[key] = 'rgb(' + Math.round(r) + ',' + Math.round(g) + ',' + Math.round(b) + ')');
+}
+function P(x, z, h) {
+  return [cx + (x * ca - z * sa) * scale, cy + (x * sa + z * ca) * scale * tilt - (h || 0) * scale];
+}
+function depth(x, z) { return x * sa + z * ca; }
+function poly(pts) {
+  ctx.beginPath();
+  for (let i = 0; i < pts.length; i++) { if (i) ctx.lineTo(pts[i][0], pts[i][1]); else ctx.moveTo(pts[i][0], pts[i][1]); }
+  ctx.closePath();
+}
+function tilePts(hi, shrink, h) {
+  const t = GEO.hexes[hi];
+  return t.v.map((vi) => { const V = GEO.verts[vi]; return P(t.x + (V.x - t.x) * shrink, t.z + (V.z - t.z) * shrink, h); });
+}
+function portPos(pt) {
+  const E = GEO.edges[pt.e], L = Math.hypot(E.x, E.z);
+  return { x: E.x + E.x / L * 0.68, z: E.z + E.z / L * 0.68 };
+}
+function iconImg(n) {
+  if (imgs[n]) return imgs[n];
+  const im = new Image();
+  im.onload = () => { dirty = true; };
+  im.src = ICONS.uri(n, 96);
+  imgs[n] = im;
+  return im;
+}
+function drawIcon(n, x, y, size) {
+  const im = iconImg(n);
+  if (im.complete && im.naturalWidth) ctx.drawImage(im, x - size / 2, y - size / 2, size, size);
+}
+function shadowEllipse(x, y, rx, ry, a) {
+  ctx.fillStyle = 'rgba(0,15,25,' + (a || 0.28) + ')';
+  ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, 7); ctx.fill();
+}
+
+/* ---------- פריסה ---------- */
+function extents() {
+  let a = 1e9, b = -1e9, c = 1e9, d = -1e9;
+  const acc = (x, z) => { const rx = x * ca - z * sa, rz = x * sa + z * ca; if (rx < a) a = rx; if (rx > b) b = rx; if (rz < c) c = rz; if (rz > d) d = rz; };
+  GEO.verts.forEach((v) => acc(v.x, v.z));
+  if (st) st.ports.forEach((pt) => {
+    const p = portPos(pt), rx = p.x * ca - p.z * sa, rz = p.x * sa + p.z * ca;
+    const r = 0.4;
+    if (rx - r < a) a = rx - r; if (rx + r > b) b = rx + r; if (rz - r < c) c = rz - r; if (rz + r > d) d = rz + r;
+  });
+  return { a, b, c, d };
+}
+function layout() {
+  ca = Math.cos(view.az); sa = Math.sin(view.az);
+  const fb = document.getElementById('fabs') || document.getElementById('ticker');
+  const bt = document.getElementById('bottom');
+  const top = fb ? fb.getBoundingClientRect().bottom + 4 : 150;
+  const bottom = bt ? H - bt.getBoundingClientRect().top + 2 : 200;
+  const availH = Math.max(160, H - top - bottom);
+  const e = extents();
+  const bw = e.b - e.a + 0.1, bh = e.d - e.c + 0.1;
+  const sW = (W + 2) / bw;
+  tilt = clamp((availH / sW - (T + 0.6)) / bh, 0.58, 0.8);
+  const sH = availH / (bh * tilt + T + 0.6);
+  scale = Math.min(sW, sH) * view.zoom * 1.0;
+  cx = W / 2 + view.px - ((e.a + e.b) / 2) * scale;
+  cy = top + availH / 2 + view.py - ((e.c + e.d) / 2) * scale * tilt + 0.1 * scale;
+}
+
+/* ---------- ים ---------- */
+function drawHills() {
+  // גבעות ערפיליות באופק, לתחושת עומק אטמוספירי כמו ברקע תמונת ההשראה
+  const horizon = cy - scale * 3.3;
+  const bands = [
+    { y: horizon - scale * 1.1, c: 'rgba(90,150,160,.22)', amp: 0.55, freq: 0.9 },
+    { y: horizon - scale * 0.55, c: 'rgba(70,130,120,.28)', amp: 0.75, freq: 1.3 },
+    { y: horizon - scale * 0.1, c: 'rgba(50,105,95,.34)', amp: 0.6, freq: 1.8 },
+  ];
+  bands.forEach((b, bi) => {
+    ctx.beginPath(); ctx.moveTo(-20, b.y + scale);
+    for (let x = -20; x <= W + 20; x += 18) {
+      const y = b.y - (Math.sin(x * 0.01 * b.freq + bi * 7) * 0.5 + Math.sin(x * 0.004 * b.freq + bi * 3) * 0.5 + 1) * scale * b.amp * 0.5;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(W + 20, b.y + scale); ctx.closePath();
+    ctx.fillStyle = b.c; ctx.fill();
+  });
+}
+function drawSea(now) {
+  const t = (now - t0Start) / 1000;
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#2487a8'); g.addColorStop(0.3, '#126687'); g.addColorStop(0.6, '#0c4e6c'); g.addColorStop(1, '#052232');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  drawHills();
+  ctx.lineWidth = 1.2;
+  for (let i = 0; i < 16; i++) {
+    const y0 = ((i * H / 15) + now * 0.009 * (0.6 + (i % 3) * 0.35)) % (H + 20) - 10;
+    ctx.strokeStyle = 'rgba(170,230,245,' + (0.04 + (i % 4) * 0.014) + ')';
+    ctx.beginPath();
+    for (let x = -10; x <= W + 10; x += 22) {
+      const y = y0 + Math.sin(x * 0.018 + now * 0.0011 + i * 1.7) * 3.2;
+      if (x === -10) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  // ניצוצות אור נעים על המים
+  const GN = 22;
+  for (let i = 0; i < GN; i++) {
+    const seed = i * 97.31;
+    const px = ((Math.sin(seed) * 0.5 + 0.5) * (W + 60) - 30 + Math.sin(t * 0.4 + seed) * 18) % (W + 60);
+    const py = ((Math.cos(seed * 1.7) * 0.5 + 0.5) * H + ((t * (14 + (i % 5) * 4)) % (H + 40))) % (H + 40) - 20;
+    const tw = 0.4 + 0.6 * Math.abs(Math.sin(t * 2.1 + seed * 3));
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.1 * tw).toFixed(3) + ')';
+    ctx.beginPath(); ctx.ellipse(px, py, 7 + 5 * tw, 1.6, 0.4, 0, 7); ctx.fill();
+  }
+  const pts = [];
+  for (let i = 0; i < 6; i++) pts.push(P(Math.cos(i * Math.PI / 3) * 5.3, Math.sin(i * Math.PI / 3) * 5.3, 0));
+  const c0 = P(0, 0, 0);
+  const sg = ctx.createRadialGradient(c0[0], c0[1], scale, c0[0], c0[1], scale * 6);
+  sg.addColorStop(0, '#45b6c4'); sg.addColorStop(0.7, '#237d94'); sg.addColorStop(1, '#155269');
+  poly(pts); ctx.fillStyle = sg; ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 7; ctx.stroke();
+  if (st) drawFoam(t);
+}
+function drawFoam(t) {
+  GEO.coast.forEach((e, i) => {
+    const E = GEO.edges[e], A = GEO.verts[E.a], B = GEO.verts[E.b];
+    const nx = E.x, nz = E.z, L = Math.hypot(nx, nz) || 1;
+    const ox = nx / L, oz = nz / L;
+    const a = P(A.x + ox * 0.1, A.z + oz * 0.1, 0), b = P(B.x + ox * 0.1, B.z + oz * 0.1, 0);
+    const pulse = 0.45 + 0.4 * Math.abs(Math.sin(t * 1.3 + i * 0.9));
+    ctx.strokeStyle = 'rgba(255,255,255,' + pulse.toFixed(2) + ')';
+    ctx.lineWidth = Math.max(1.5, scale * 0.045); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+  });
+}
+
+/* ---------- אלמנטים מצוירים ---------- */
+function tree(x, y, k, ph, tt) {
+  const u = scale * k;
+  const sway = tt !== undefined ? Math.sin(tt * 0.9 + ph) * u * 0.02 : 0;
+  shadowEllipse(x + u * 0.06, y + u * 0.02, u * 0.2, u * 0.07, 0.3);
+  ctx.fillStyle = '#5b3d22';
+  ctx.fillRect(x - u * 0.03, y - u * 0.2, u * 0.06, u * 0.2);
+  const r = u * 0.2, cy0 = y - u * 0.32, cx0 = x + sway;
+  ctx.fillStyle = '#2d5a25'; ctx.beginPath(); ctx.arc(cx0, cy0, r, 0, 7); ctx.fill();
+  ctx.fillStyle = '#3f7a33'; ctx.beginPath(); ctx.arc(cx0 - r * 0.18, cy0 - r * 0.2, r * 0.8, 0, 7); ctx.fill();
+  ctx.fillStyle = '#5fa146'; ctx.beginPath(); ctx.arc(cx0 - r * 0.38 + sway * 0.6, cy0 - r * 0.42, r * 0.38, 0, 7); ctx.fill();
+  ctx.fillStyle = '#26401a';
+  ctx.beginPath(); ctx.arc(cx0 + r * 0.42, cy0 + r * 0.32, r * 0.13, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx0 - r * 0.1, cy0 + r * 0.55, r * 0.11, 0, 7); ctx.fill();
+}
+function horse(x, y, u, col, flip, ph, tt) {
+  // כבשה, עם נדנוד ראש עדין (אנימציית חיים)
+  const bob = tt !== undefined ? Math.sin(tt * 1.1 + ph) * 0.045 : 0;
+  ctx.save(); ctx.translate(x, y); if (flip) ctx.scale(-1, 1);
+  ctx.rotate(bob);
+  shadowEllipse(0, u * 0.02, u * 0.24, u * 0.07, 0.3);
+  const dark = '#3d2f24';
+  ctx.fillStyle = dark; ctx.lineCap = 'round';
+  [-0.13, -0.05, 0.06, 0.14].forEach((lx) => { ctx.fillRect(u * lx - u * 0.022, -u * 0.12, u * 0.044, u * 0.13); });
+  ctx.fillStyle = col;
+  [[0, -0.26, 0.2, 0.15], [-0.14, -0.3, 0.13, 0.11], [0.15, -0.28, 0.12, 0.1], [-0.2, -0.2, 0.09, 0.08], [0.21, -0.19, 0.09, 0.08]].forEach((c) => {
+    ctx.beginPath(); ctx.ellipse(u * c[0], u * c[1], u * c[2], u * c[3], 0, 0, 7); ctx.fill();
+  });
+  ctx.fillStyle = dark;
+  ctx.beginPath(); ctx.ellipse(-u * 0.33, -u * 0.22, u * 0.09, u * 0.065, -0.3, 0, 7); ctx.fill();
+  ctx.fillStyle = '#2a2016';
+  ctx.beginPath(); ctx.arc(-u * 0.36, -u * 0.23, u * 0.018, 0, 7); ctx.fill();
+  ctx.fillStyle = dark;
+  ctx.beginPath(); ctx.ellipse(-u * 0.26, -u * 0.33, u * 0.05, u * 0.032, 0.4, 0, 7); ctx.fill();
+  ctx.restore();
+}
+function rock(x, y, r, s) {
+  const pts = [];
+  for (let i = 0; i < 6; i++) {
+    const a = i * Math.PI / 3 + s, rr = r * (0.75 + 0.35 * Math.abs(Math.sin(s * 3.1 + i * 1.9)));
+    pts.push([x + Math.cos(a) * rr, y - r * 0.4 + Math.sin(a) * rr * 0.72]);
+  }
+  shadowEllipse(x + r * 0.15, y + r * 0.1, r * 1.05, r * 0.32, 0.3);
+  poly(pts); ctx.fillStyle = '#8b8e8c'; ctx.fill();
+  const c = [x, y - r * 0.4];
+  poly([pts[3], pts[4], pts[5], c]); ctx.fillStyle = '#676a69'; ctx.fill();
+  poly([pts[0], pts[1], pts[2], c]); ctx.fillStyle = '#b6b9b7'; ctx.fill();
+  poly(pts); ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; ctx.stroke();
+}
+function peak(x, y, w, h) {
+  shadowEllipse(x + w * 0.1, y + 1, w * 0.6, w * 0.14, 0.28);
+  ctx.fillStyle = '#7589a0'; ctx.beginPath(); ctx.moveTo(x - w / 2, y); ctx.lineTo(x, y - h); ctx.lineTo(x, y); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#485c73'; ctx.beginPath(); ctx.moveTo(x + w / 2, y); ctx.lineTo(x, y - h); ctx.lineTo(x, y); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#f0f4f8';
+  ctx.beginPath(); ctx.moveTo(x, y - h); ctx.lineTo(x + w * 0.14, y - h * 0.7); ctx.lineTo(x + w * 0.05, y - h * 0.76); ctx.lineTo(x - w * 0.04, y - h * 0.66); ctx.lineTo(x - w * 0.14, y - h * 0.7); ctx.closePath(); ctx.fill();
+}
+function hayRoll(x, y, r) {
+  shadowEllipse(x + r * 0.2, y + r * 0.08, r * 1.1, r * 0.35, 0.28);
+  ctx.fillStyle = '#b98f2a'; ctx.beginPath(); ctx.ellipse(x, y - r * 0.9, r, r * 1.05, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#e7c14a'; ctx.beginPath(); ctx.ellipse(x - r * 0.05, y - r * 0.95, r * 0.92, r * 0.95, 0, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#a97f1e'; ctx.lineWidth = 1;
+  for (let i = 1; i <= 3; i++) { ctx.beginPath(); ctx.ellipse(x - r * 0.05, y - r * 0.95, r * i * 0.25, r * i * 0.25, 0, 0, 7); ctx.stroke(); }
+}
+function cactus(x, y, u) {
+  shadowEllipse(x + u * 0.05, y, u * 0.16, u * 0.05, 0.25);
+  ctx.strokeStyle = '#4c7f3a'; ctx.lineCap = 'round'; ctx.lineWidth = u * 0.09;
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - u * 0.4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x, y - u * 0.16); ctx.lineTo(x - u * 0.13, y - u * 0.16); ctx.lineTo(x - u * 0.13, y - u * 0.3); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x, y - u * 0.24); ctx.lineTo(x + u * 0.12, y - u * 0.24); ctx.lineTo(x + u * 0.12, y - u * 0.34); ctx.stroke();
+}
+
+function decorate(hi, type, now) {
+  const t = GEO.hexes[hi];
+  const tt = (now || 0) / 1000;
+  const S = (dx, dz) => P(t.x + dx, t.z + dz, T);
+  const jit = ((hi * 53) % 7) * 0.05;
+  if (type === 'avo') {
+    const items = [[-0.52, -0.33], [0.03, -0.58], [0.52, -0.31], [-0.54, 0.3], [0.5, 0.33], [0.04, 0.6]]
+      .map((p) => ({ x: p[0], z: p[1], d: depth(p[0], p[1]) }));
+    items.sort((a, b) => a.d - b.d);
+    items.forEach((it, i) => { const p = S(it.x, it.z); tree(p[0], p[1], 0.85 + (i % 2) * 0.1, hi * 1.7 + i * 2.3, tt); });
+  } else if (type === 'horse') {
+    ctx.strokeStyle = '#6b4f30'; ctx.lineWidth = Math.max(1.5, scale * 0.04); ctx.lineCap = 'round';
+    const f1 = S(-0.62, -0.05), f2 = S(-0.62, 0.5), f3 = S(0.05, 0.62);
+    ctx.beginPath(); ctx.moveTo(f1[0], f1[1]); ctx.lineTo(f2[0], f2[1]); ctx.lineTo(f3[0], f3[1]); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(f1[0], f1[1] - scale * 0.1); ctx.lineTo(f2[0], f2[1] - scale * 0.1); ctx.lineTo(f3[0], f3[1] - scale * 0.1); ctx.stroke();
+    const a = S(0.45, -0.4), b = S(0.3, 0.42), c = S(-0.3, -0.5);
+    const list = [[a, '#f4efe0', false], [b, '#e6dcc0', true], [c, '#fbf8ee', false]].sort((p, q) => p[0][1] - q[0][1]);
+    list.forEach((h, i) => horse(h[0][0], h[0][1], scale * 0.6, h[1], h[2], hi * 2.1 + i * 3.1, tt));
+  } else if (type === 'hay') {
+    ctx.save(); poly(tilePts(hi, 0.93, T)); ctx.clip();
+    for (let k = -5; k <= 5; k++) {
+      const q = [P(t.x - 1.1, t.z + k * 0.2 - 0.09, T), P(t.x + 1.1, t.z + k * 0.2 - 0.09, T), P(t.x + 1.1, t.z + k * 0.2 + 0.09, T), P(t.x - 1.1, t.z + k * 0.2 + 0.09, T)];
+      poly(q); ctx.fillStyle = k % 2 ? 'rgba(160,120,30,.28)' : 'rgba(255,240,170,.22)'; ctx.fill();
+    }
+    ctx.restore();
+    const a = S(-0.5, 0.42), b = S(0.5, -0.4);
+    hayRoll(a[0], a[1], scale * 0.15 + jit); hayRoll(b[0], b[1], scale * 0.15);
+  } else if (type === 'stone') {
+    const items = [[-0.5, 0.2, 0.2], [0.3, 0.5, 0.17], [0.55, -0.2, 0.22], [-0.2, -0.55, 0.16], [-0.6, -0.3, 0.13]].sort((p, q) => depth(p[0], p[1]) - depth(q[0], q[1]));
+    items.forEach((it, i) => { const p = S(it[0], it[1]); rock(p[0], p[1], scale * it[2], i * 1.3 + hi); });
+  } else if (type === 'metal') {
+    const items = [[-0.42, 0.28, 0.5, 0.62], [0.45, 0.2, 0.42, 0.5], [0.02, -0.5, 0.55, 0.7]].sort((p, q) => depth(p[0], p[1]) - depth(q[0], q[1]));
+    items.forEach((it) => { const p = S(it[0], it[1]); peak(p[0], p[1], scale * it[2], scale * it[3]); });
+    [S(0.55, -0.35), S(-0.6, -0.1)].forEach((g) => {
+      ctx.fillStyle = '#9cc8ee'; ctx.beginPath(); ctx.moveTo(g[0], g[1] - scale * 0.16); ctx.lineTo(g[0] + scale * 0.05, g[1] - scale * 0.06); ctx.lineTo(g[0], g[1]); ctx.lineTo(g[0] - scale * 0.05, g[1] - scale * 0.06); ctx.closePath(); ctx.fill();
+    });
+  } else {
+    ctx.lineWidth = Math.max(1.5, scale * 0.05); ctx.lineCap = 'round';
+    [[-0.6, 0.1, 0.4, '#c8ae74'], [-0.5, 0.42, 0.55, '#f2e2b8'], [-0.4, -0.3, 0.5, '#c8ae74']].forEach((d) => {
+      const a = S(d[0], d[1]), b = S(d[0] + d[2], d[1] - 0.1), m = S(d[0] + d[2] / 2, d[1] - 0.22);
+      ctx.strokeStyle = d[3]; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.quadraticCurveTo(m[0], m[1], b[0], b[1]); ctx.stroke();
+    });
+    const c1 = S(0.5, 0.35), c2 = S(0.35, -0.45);
+    cactus(c1[0], c1[1], scale * 0.85); cactus(c2[0], c2[1], scale * 0.65);
+  }
+}
+function drawToken(hi, num, now) {
+  const t = GEO.hexes[hi], p = P(t.x, t.z, T);
+  let k = 1;
+  if (pulses[hi]) {
+    const q = (now - pulses[hi]) / 1400;
+    if (q >= 1) delete pulses[hi]; else k = 1 + 0.5 * Math.abs(Math.sin(q * Math.PI * 3)) * (1 - q);
+  }
+  const r = scale * 0.29 * k, lift = scale * 0.055;
+  shadowEllipse(p[0] + r * 0.12, p[1] + r * 0.12 * tilt, r * 1.02, r * 0.85 * tilt + 1, 0.32);
+  ctx.fillStyle = '#b8a778';
+  ctx.beginPath(); ctx.ellipse(p[0], p[1], r, r * 0.92, 0, 0, 7); ctx.fill();
+  const cy0 = p[1] - lift;
+  const g = ctx.createRadialGradient(p[0] - r * 0.3, cy0 - r * 0.3, 1, p[0], cy0, r);
+  g.addColorStop(0, '#fbf3d9'); g.addColorStop(1, '#e6d7aa');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(p[0], cy0, r, r * 0.92, 0, 0, 7); ctx.fill();
+  ctx.strokeStyle = 'rgba(120,95,40,.55)'; ctx.lineWidth = 1; ctx.stroke();
+  const hot = num === 6 || num === 8;
+  ctx.fillStyle = hot ? '#b3261e' : '#2b2b2b';
+  ctx.font = '700 ' + Math.round(r * (hot ? 1.08 : 0.98)) + 'px "Suez One", Georgia, serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(String(num), p[0], cy0 - r * 0.1);
+  const dots = 6 - Math.abs(7 - num);
+  for (let i = 0; i < dots; i++) { ctx.beginPath(); ctx.arc(p[0] + (i - (dots - 1) / 2) * r * 0.19, cy0 + r * 0.56, Math.max(0.9, r * 0.06), 0, 7); ctx.fill(); }
+}
+function drawTile(hi, now) {
+  const H_ = st.hexes[hi], C = TERR[H_.type], t = GEO.hexes[hi];
+  const topP = tilePts(hi, 0.955, T), botP = tilePts(hi, 0.955, 0);
+  const cTop = P(t.x, t.z, T);
+  for (let i = 0; i < 6; i++) {
+    const j = (i + 1) % 6;
+    const mx = (topP[i][0] + topP[j][0]) / 2 - cTop[0];
+    poly([topP[i], topP[j], botP[j], botP[i]]);
+    ctx.fillStyle = shade(C.side, mx < -2 ? 0.12 : mx > 2 ? -0.2 : -0.06); ctx.fill();
+  }
+  const r = scale * 1.0;
+  const g = ctx.createRadialGradient(cTop[0] - r * 0.32, cTop[1] - r * 0.38, 2, cTop[0], cTop[1], r * 1.2);
+  g.addColorStop(0, shade(C.hi, 0.24)); g.addColorStop(0.42, C.hi); g.addColorStop(0.74, C.top); g.addColorStop(1, shade(C.top, -0.2));
+  poly(topP); ctx.fillStyle = g; ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.save(); poly(topP); ctx.clip();
+  ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = Math.max(1, scale * 0.025); ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(topP[4][0], topP[4][1]); ctx.lineTo(topP[5][0], topP[5][1]); ctx.lineTo(topP[0][0], topP[0][1]); ctx.stroke();
+  ctx.restore();
+  decorate(hi, H_.type, now);
+  if (H_.num) drawToken(hi, H_.num, now);
+}
+function drawPort(pt) {
+  const E = GEO.edges[pt.e], b = portPos(pt), pb = P(b.x, b.z, 0.06);
+  ctx.strokeStyle = '#7d5a30'; ctx.lineWidth = Math.max(2.5, scale * 0.08); ctx.lineCap = 'round';
+  [E.a, E.b].forEach((vi) => {
+    const V = GEO.verts[vi], pv = P(V.x, V.z, 0.12);
+    ctx.beginPath(); ctx.moveTo(pv[0], pv[1]); ctx.lineTo(pb[0], pb[1]); ctx.stroke();
+  });
+  ctx.strokeStyle = '#c99a5b'; ctx.lineWidth = Math.max(1, scale * 0.025);
+  [E.a, E.b].forEach((vi) => {
+    const V = GEO.verts[vi], pv = P(V.x, V.z, 0.12);
+    ctx.beginPath(); ctx.moveTo(pv[0], pv[1] - 1); ctx.lineTo(pb[0], pb[1] - 1); ctx.stroke();
+  });
+  const r = scale * 0.4, y = pb[1] - scale * 0.1;
+  shadowEllipse(pb[0] + 2, pb[1] + 2, r * 1.05, r * 0.5, 0.3);
+  ctx.fillStyle = '#5b3e1e'; ctx.beginPath(); ctx.arc(pb[0], y, r, 0, 7); ctx.fill();
+  const g = ctx.createLinearGradient(pb[0], y - r, pb[0], y + r);
+  g.addColorStop(0, '#f8efd6'); g.addColorStop(1, '#e3d3a8');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(pb[0], y, r * 0.86, 0, 7); ctx.fill();
+  ctx.fillStyle = '#2a2118'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (pt.type === 'any') {
+    ctx.font = '700 ' + Math.round(r * 0.78) + 'px "Suez One", Georgia, serif';
+    ctx.fillText('3:1', pb[0], y + 1);
+  } else {
+    ctx.font = '700 ' + Math.round(r * 0.5) + 'px "Suez One", Georgia, serif';
+    ctx.fillText('2:1', pb[0], y - r * 0.4);
+    drawIcon(pt.type, pb[0], y + r * 0.3, r * 0.9);
+  }
+}
+function drawRoad(e, p, k) {
+  const E = GEO.edges[e], A = GEO.verts[E.a], B = GEO.verts[E.b];
+  const t0 = 0.09, t1 = 0.91;
+  const a = P(A.x + (B.x - A.x) * t0, A.z + (B.z - A.z) * t0, T), b = P(A.x + (B.x - A.x) * t1, A.z + (B.z - A.z) * t1, T);
+  const w = scale * 0.18 * k;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = 'rgba(0,15,25,.4)'; ctx.lineWidth = w * 1.25;
+  ctx.beginPath(); ctx.moveTo(a[0] + 1, a[1] + scale * 0.07); ctx.lineTo(b[0] + 1, b[1] + scale * 0.07); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = w * 1.18;
+  ctx.beginPath(); ctx.moveTo(a[0], a[1] + scale * 0.02); ctx.lineTo(b[0], b[1] + scale * 0.02); ctx.stroke();
+  ctx.strokeStyle = PDARK[p]; ctx.lineWidth = w;
+  ctx.beginPath(); ctx.moveTo(a[0], a[1] + scale * 0.06); ctx.lineTo(b[0], b[1] + scale * 0.06); ctx.stroke();
+  ctx.strokeStyle = PCOL[p]; ctx.lineWidth = w;
+  ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+  ctx.strokeStyle = PLIGHT[p]; ctx.lineWidth = Math.max(1, w * 0.28); ctx.globalAlpha = 0.7;
+  ctx.beginPath(); ctx.moveTo(a[0], a[1] - w * 0.22); ctx.lineTo(b[0], b[1] - w * 0.22); ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+function drawHouse(x, y, p, k) {
+  const u = scale * 0.58 * k;
+  shadowEllipse(x + u * 0.12, y + u * 0.02, u * 0.42, u * 0.12, 0.35);
+  const w = u * 0.42, h = u * 0.34;
+  ctx.fillStyle = '#e9dfc2'; ctx.fillRect(x - w, y - h, w * 2, h);
+  ctx.fillStyle = 'rgba(70,50,20,.22)'; ctx.fillRect(x + w * 0.2, y - h, w * 0.8, h);
+  ctx.fillStyle = '#4a3a24'; ctx.fillRect(x - w * 0.18, y - h * 0.62, w * 0.36, h * 0.62);
+  ctx.fillStyle = PCOL[p];
+  ctx.beginPath(); ctx.moveTo(x - w * 1.25, y - h); ctx.lineTo(x, y - h - u * 0.36); ctx.lineTo(x + w * 1.25, y - h); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = PDARK[p];
+  ctx.beginPath(); ctx.moveTo(x, y - h - u * 0.36); ctx.lineTo(x + w * 1.25, y - h); ctx.lineTo(x + w * 0.2, y - h); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.45)'; ctx.lineWidth = 1.5;
+  ctx.strokeRect(x - w, y - h, w * 2, h);
+  ctx.fillStyle = PCOL[p]; ctx.fillRect(x - w, y - h * 0.16, w * 2, h * 0.16);
+}
+function drawCommune(x, y, p, k) {
+  const u = scale * 0.56 * k;
+  shadowEllipse(x + u * 0.15, y + u * 0.02, u * 0.75, u * 0.16, 0.38);
+  const wall = '#eadfc2';
+  ctx.fillStyle = wall; ctx.fillRect(x - u * 0.28, y - u * 0.38, u * 0.9, u * 0.38);
+  ctx.fillStyle = 'rgba(70,50,20,.22)'; ctx.fillRect(x + u * 0.3, y - u * 0.38, u * 0.32, u * 0.38);
+  ctx.fillStyle = PCOL[p];
+  ctx.beginPath(); ctx.moveTo(x - u * 0.38, y - u * 0.38); ctx.lineTo(x - u * 0.12, y - u * 0.62); ctx.lineTo(x + u * 0.48, y - u * 0.62); ctx.lineTo(x + u * 0.72, y - u * 0.38); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = PDARK[p];
+  ctx.beginPath(); ctx.moveTo(x + u * 0.48, y - u * 0.62); ctx.lineTo(x + u * 0.72, y - u * 0.38); ctx.lineTo(x + u * 0.3, y - u * 0.38); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#4a3a24';
+  [0.02, 0.32].forEach((o) => ctx.fillRect(x + u * o, y - u * 0.26, u * 0.12, u * 0.26));
+  ctx.fillStyle = wall; ctx.fillRect(x - u * 0.62, y - u * 0.7, u * 0.34, u * 0.7);
+  ctx.fillStyle = 'rgba(70,50,20,.22)'; ctx.fillRect(x - u * 0.42, y - u * 0.7, u * 0.14, u * 0.7);
+  ctx.fillStyle = PCOL[p];
+  ctx.beginPath(); ctx.moveTo(x - u * 0.7, y - u * 0.7); ctx.lineTo(x - u * 0.45, y - u * 1.0); ctx.lineTo(x - u * 0.2, y - u * 0.7); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#2b2b2b'; ctx.fillRect(x - u * 0.5, y - u * 0.55, u * 0.1, u * 0.14);
+  ctx.strokeStyle = '#3a2a18'; ctx.lineWidth = Math.max(1, u * 0.04);
+  ctx.beginPath(); ctx.moveTo(x + u * 0.5, y - u * 0.62); ctx.lineTo(x + u * 0.5, y - u * 1.0); ctx.stroke();
+  ctx.fillStyle = PCOL[p]; ctx.beginPath(); ctx.moveTo(x + u * 0.5, y - u * 1.0); ctx.lineTo(x + u * 0.82, y - u * 0.9); ctx.lineTo(x + u * 0.5, y - u * 0.8); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 1; ctx.strokeRect(x - u * 0.28, y - u * 0.38, u * 0.9, u * 0.38);
+}
+function drawRobber(now) {
+  let x = robber.x, z = robber.z, hop = 0;
+  if (robber.moving) {
+    const k = (now - robber.t0) / 700;
+    if (k >= 1) { robber.moving = false; robber.x = robber.tx; robber.z = robber.tz; x = robber.x; z = robber.z; }
+    else { const e = ease(k); x = robber.fx + (robber.tx - robber.fx) * e; z = robber.fz + (robber.tz - robber.fz) * e; hop = Math.sin(k * Math.PI) * 0.7; }
+  }
+  const p = P(x, z, T), s = scale * 0.3, y = p[1] - hop * scale;
+  shadowEllipse(p[0] + 2, p[1] + 1, s * 0.75, s * 0.22, 0.38);
+  const g = ctx.createLinearGradient(p[0] - s * 0.6, 0, p[0] + s * 0.6, 0);
+  g.addColorStop(0, '#3a3a44'); g.addColorStop(1, '#131318');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.moveTo(p[0] - s * 0.62, y); ctx.quadraticCurveTo(p[0] - s * 0.5, y - s * 0.9, p[0], y - s * 1.35); ctx.quadraticCurveTo(p[0] + s * 0.5, y - s * 0.9, p[0] + s * 0.62, y); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#0a0a0e'; ctx.beginPath(); ctx.ellipse(p[0], y - s * 1.0, s * 0.2, s * 0.24, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#e9c46a'; ctx.beginPath(); ctx.arc(p[0] - s * 0.07, y - s * 1.02, s * 0.03, 0, 7); ctx.arc(p[0] + s * 0.07, y - s * 1.02, s * 0.03, 0, 7); ctx.fill();
+}
+function drawTargets(now) {
+  if (!targets.length) return;
+  const k = 1 + 0.12 * Math.sin(now / 1000 * 5);
+  const crowd = targets.length > 25;
+  const isSel = (t) => selected && selected.kind === t.kind && selected.id === t.id;
+  targets.forEach((t) => {
+    const sel = isSel(t);
+    if (t.kind === 'v') {
+      const V = GEO.verts[t.id], p = P(V.x, V.z, T);
+      const r = scale * (sel ? 0.34 : crowd ? 0.14 : 0.24) * (sel ? 1 : k);
+      ctx.fillStyle = sel ? 'rgba(61,220,151,.95)' : 'rgba(255,210,90,' + (crowd ? '.9' : '.95') + ')';
+      ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = crowd && !sel ? 1.5 : 2;
+      ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = sel ? 'rgba(61,220,151,.5)' : 'rgba(255,210,90,.45)'; ctx.lineWidth = 3;
+      if (!crowd || sel) { ctx.beginPath(); ctx.arc(p[0], p[1], r + scale * 0.1, 0, 7); ctx.stroke(); }
+    } else if (t.kind === 'e') {
+      const E = GEO.edges[t.id], A = GEO.verts[E.a], B = GEO.verts[E.b];
+      const a = P(A.x + (B.x - A.x) * 0.15, A.z + (B.z - A.z) * 0.15, T), b = P(A.x + (B.x - A.x) * 0.85, A.z + (B.z - A.z) * 0.85, T);
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = scale * (sel ? 0.34 : 0.26) * (sel ? 1 : k);
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+      ctx.strokeStyle = sel ? 'rgba(61,220,151,.98)' : 'rgba(255,210,90,.96)'; ctx.lineWidth = scale * (sel ? 0.26 : 0.19) * (sel ? 1 : k);
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    } else {
+      const t2 = GEO.hexes[t.id], p = P(t2.x, t2.z, T);
+      ctx.strokeStyle = sel ? 'rgba(61,220,151,.98)' : 'rgba(255,110,90,.95)'; ctx.lineWidth = Math.max(3, scale * (sel ? 0.13 : 0.09));
+      ctx.beginPath(); ctx.ellipse(p[0], p[1], scale * 0.8 * k, scale * 0.8 * tilt * k, 0, 0, 7); ctx.stroke();
+      if (sel) { ctx.fillStyle = 'rgba(61,220,151,.2)'; ctx.fill(); }
+    }
+  });
+}
+function drawFx(now) {
+  if (!fx.length) return;
+  fx = fx.filter((f) => now - f.t0 < f.dur);
+  fx.forEach((f) => {
+    const k = clamp((now - f.t0) / f.dur, 0, 1);
+    if (f.k === 'ring') {
+      const r = scale * (0.15 + k * 0.55), a = (1 - k) * 0.8;
+      ctx.strokeStyle = f.c; ctx.globalAlpha = a; ctx.lineWidth = Math.max(1.5, scale * 0.06 * (1 - k * 0.5));
+      ctx.beginPath(); ctx.ellipse(f.x, f.y, r, r * tilt, 0, 0, 7); ctx.stroke();
+      ctx.globalAlpha = 1;
+    } else if (f.k === 'spark') {
+      const e = ease(k), x = f.x + f.vx * e * 0.9, y = f.y + f.vy * e * 0.9 + 300 * e * e * (scale / 60);
+      ctx.globalAlpha = 1 - k; ctx.fillStyle = f.c;
+      ctx.beginPath(); ctx.arc(x, y, Math.max(1, scale * 0.045 * (1 - k * 0.5)), 0, 7); ctx.fill();
+      ctx.globalAlpha = 1;
+    } else if (f.k === 'dust') {
+      const x = f.x + f.vx * k, y = f.y + f.vy * k;
+      ctx.globalAlpha = (1 - k) * 0.5; ctx.fillStyle = '#d8cba6';
+      ctx.beginPath(); ctx.arc(x, y, scale * 0.05 * (1 + k), 0, 7); ctx.fill();
+      ctx.globalAlpha = 1;
+    } else if (f.k === 'fly') {
+      const e = ease(Math.min(1, k * 1.4));
+      const x = f.x + f.dx * e, y = f.y - scale * 1.9 * e;
+      const a = k < 0.78 ? 1 : (1 - (k - 0.78) / 0.22);
+      const s = scale * 0.5 * (k < 0.15 ? k / 0.15 : 1);
+      ctx.globalAlpha = Math.max(0, a);
+      ctx.fillStyle = f.c; ctx.beginPath(); ctx.arc(x, y, s * 0.62, 0, 7); ctx.fill();
+      drawIcon(f.name, x, y, s * 0.8);
+      ctx.globalAlpha = 1;
+    }
+  });
+}
+function draw(now) {
+  drawSea(now);
+  if (!st) return;
+  for (let i = 0; i < 19; i++) {
+    const pts = tilePts(i, 1.0, 0).map((q) => [q[0] + scale * 0.09, q[1] + scale * 0.16]);
+    poly(pts); ctx.fillStyle = 'rgba(0,25,35,.3)'; ctx.fill();
+  }
+  const order = [];
+  for (let i = 0; i < 19; i++) order.push(i);
+  order.sort((a, b) => depth(GEO.hexes[a].x, GEO.hexes[a].z) - depth(GEO.hexes[b].x, GEO.hexes[b].z));
+  st.ports.forEach(drawPort);
+  order.forEach((i) => drawTile(i, now));
+  Object.keys(cur.roads).map(Number).sort((a, b) => depth(GEO.edges[a].x, GEO.edges[a].z) - depth(GEO.edges[b].x, GEO.edges[b].z)).forEach((k) => {
+    const r = cur.roads[k];
+    drawRoad(k, r.p, clamp((now - r.t0) / 300, 0.05, 1));
+  });
+  const items = Object.keys(cur.builds).map((k) => ({ d: depth(GEO.verts[k].x, GEO.verts[k].z), b: +k }));
+  items.push({ d: depth(robber.x, robber.z) + 0.001, robber: true });
+  items.sort((a, b) => a.d - b.d).forEach((it) => {
+    if (it.robber) { drawRobber(now); return; }
+    const b = cur.builds[it.b], V = GEO.verts[it.b], p = P(V.x, V.z, T);
+    const kk = Math.max(0.05, easeBack(clamp((now - b.t0) / 380, 0, 1)));
+    if (b.c) drawCommune(p[0], p[1], b.p, kk); else drawHouse(p[0], p[1], b.p, kk);
+  });
+  drawTargets(now);
+  drawFx(now);
+  const sun = ctx.createRadialGradient(W * 0.2, H * 0.08, 0, W * 0.2, H * 0.08, Math.max(W, H) * 0.75);
+  sun.addColorStop(0, 'rgba(255,232,180,.16)'); sun.addColorStop(0.4, 'rgba(255,220,150,.06)'); sun.addColorStop(1, 'rgba(255,220,150,0)');
+  ctx.fillStyle = sun; ctx.fillRect(0, 0, W, H);
+  // הגברת רוויה וקונטרסט כללית ("color grade") לתחושה חיה ובוהקת יותר
+  ctx.save();
+  ctx.globalCompositeOperation = 'overlay';
+  ctx.globalAlpha = 0.07;
+  const cg = ctx.createLinearGradient(0, 0, W, H);
+  cg.addColorStop(0, '#ffdf9e'); cg.addColorStop(0.5, '#ffb199'); cg.addColorStop(1, '#8fd9ff');
+  ctx.fillStyle = cg; ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+  const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.45, W / 2, H / 2, Math.max(W, H) * 0.8);
+  vg.addColorStop(0, 'rgba(0,10,20,0)'); vg.addColorStop(1, 'rgba(0,10,20,.38)');
+  ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+}
+
+/* ---------- סנכרון מצב ---------- */
+function sync(s) {
+  st = s;
+  ICON_NAMES.forEach(iconImg);
+  const now = performance.now();
+  if (cur.id !== s.id) cur = { id: s.id, roads: {}, builds: {}, robberHex: -1, rollN: s.rollN, init: false };
+  const animate = cur.init;
+  for (const k in cur.roads) if (s.eo[k] === undefined) delete cur.roads[k];
+  for (const k in s.eo) {
+    if (cur.roads[k]) continue;
+    cur.roads[k] = { p: s.eo[k], t0: animate ? now : -1000 };
+    if (animate) { const E = GEO.edges[k], p = P(E.x, E.z, T); spawnRing(p[0], p[1], PCOL[s.eo[k]]); }
+  }
+  for (const k in cur.builds) if (!s.vo[k]) delete cur.builds[k];
+  for (const k in s.vo) {
+    const o = s.vo[k], b = cur.builds[k];
+    if (b && b.p === o.p && b.c === o.c) continue;
+    cur.builds[k] = { p: o.p, c: o.c, t0: animate ? now : -1000 };
+    if (animate) { const V = GEO.verts[k], p = P(V.x, V.z, T); spawnRing(p[0], p[1], PCOL[o.p]); spawnSpark(p[0], p[1] - scale * 0.3, PCOL[o.p]); }
+  }
+  if (cur.robberHex !== s.robber) {
+    const h = GEO.hexes[s.robber];
+    const tx = h.x + 0.36, tz = h.z + 0.42;
+    if (animate && cur.robberHex >= 0) {
+      robber.fx = robber.x; robber.fz = robber.z; robber.tx = tx; robber.tz = tz; robber.t0 = now; robber.moving = true;
+      const p0 = P(robber.fx, robber.fz, T), p1 = P(tx, tz, T);
+      spawnDust(p0[0], p0[1]); spawnDust(p1[0], p1[1]);
+    } else { robber.x = tx; robber.z = tz; robber.moving = false; }
+    cur.robberHex = s.robber;
+  }
+  if (s.rollN !== cur.rollN) {
+    cur.rollN = s.rollN;
+    if (animate) (s.hot || []).forEach((hi) => {
+      pulses[hi] = now;
+      const h = GEO.hexes[hi], p = P(h.x, h.z, T), ty = st.hexes[hi].type;
+      spawnFlyIcon(p[0], p[1], ty, TERR[ty].hi);
+    });
+  }
+  cur.init = true;
+  dirty = true;
+}
+function setTargets(kind, ids) {
+  targets = (kind && ids) ? ids.map((id) => ({ kind, id })) : [];
+  if (selected && !targets.some((t) => t.kind === selected.kind && t.id === selected.id)) selected = null;
+  dirty = true;
+}
+function setSelected(sel) { selected = sel ? { kind: sel.kind, id: sel.id } : null; dirty = true; }
+function tPos(t) {
+  if (t.kind === 'v') { const V = GEO.verts[t.id]; return P(V.x, V.z, T); }
+  if (t.kind === 'e') { const E = GEO.edges[t.id]; return P(E.x, E.z, T); }
+  const h = GEO.hexes[t.id]; return P(h.x, h.z, T);
+}
+function pickAt(x, y) {
+  const r = cv.getBoundingClientRect();
+  let best = null, bd = 1e9;
+  targets.forEach((t) => {
+    const p = tPos(t);
+    const d = Math.hypot(p[0] + r.left - x, (p[1] + r.top - y) * 1.15);
+    if (d < bd) { bd = d; best = t; }
+  });
+  const lim = best && best.kind === 'h' ? Math.max(60, scale * 1.1) : Math.max(46, scale * 0.95);
+  return best && bd < lim ? { kind: best.kind, id: best.id } : null;
+}
+
+/* ---------- קלט ---------- */
+function bindInput() {
+  const ptrs = new Map();
+  let tap = null, pinch0 = 1, zoom0 = 1;
+  cv.style.touchAction = 'none';
+  cv.addEventListener('pointerdown', (e) => {
+    try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (ptrs.size === 1) tap = { t: performance.now(), moved: 0, x: e.clientX, y: e.clientY };
+    else {
+      tap = null;
+      const a = Array.from(ptrs.values());
+      pinch0 = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1;
+      zoom0 = view.tzoom;
+    }
+  });
+  cv.addEventListener('pointermove', (e) => {
+    const p = ptrs.get(e.pointerId);
+    if (!p) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y;
+    p.x = e.clientX; p.y = e.clientY;
+    if (ptrs.size === 1) {
+      if (tap) tap.moved += Math.abs(dx) + Math.abs(dy);
+      if (!tap || tap.moved > 12) { view.px = clamp(view.px + dx, -W, W); view.py = clamp(view.py + dy, -H, H); }
+    } else if (ptrs.size === 2) {
+      const a = Array.from(ptrs.values());
+      const d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1;
+      view.tzoom = clamp(zoom0 * d / pinch0, 0.7, 3.2);
+    }
+  });
+  cv.addEventListener('pointerup', (e) => {
+    const had = ptrs.has(e.pointerId);
+    ptrs.delete(e.pointerId);
+    if (had && tap && tap.moved < 12 && performance.now() - tap.t < 700 && api.onTap) {
+      const hit = pickAt(tap.x, tap.y);
+      if (hit) api.onTap(hit);
+    }
+    if (!ptrs.size) tap = null;
+  });
+  cv.addEventListener('pointercancel', (e) => { ptrs.delete(e.pointerId); tap = null; });
+  cv.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    view.tzoom = clamp(view.tzoom * (e.deltaY > 0 ? 0.92 : 1.08), 0.7, 3.2);
+  }, { passive: false });
+}
+function resize() {
+  W = window.innerWidth; H = window.innerHeight;
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function loop(now) {
+  requestAnimationFrame(loop);
+  if (now - lastDraw < 15) return;
+  lastDraw = now;
+  const dz = view.tzoom - view.zoom, da = view.taz - view.az;
+  if (Math.abs(dz) > 0.0005) view.zoom += dz * 0.22; else view.zoom = view.tzoom;
+  if (Math.abs(da) > 0.0005) view.az += da * 0.18; else view.az = view.taz;
+  layout();
+  draw(now);
+}
+
+const api = {
+  onTap: null,
+  init(canvas) {
+    cv = canvas;
+    ctx = cv.getContext('2d');
+    if (!ctx) throw new Error('canvas2d');
+    ICON_NAMES.forEach(iconImg);
+    bindInput();
+    window.addEventListener('resize', resize);
+    resize();
+    requestAnimationFrame(loop);
+  },
+  sync,
+  setTargets,
+  setSelected,
+  toggleTop() { view.tzoom = 1; view.px = 0; view.py = 0; return false; },
+  isTop() { return false; },
+  resetCam() { view.tzoom = 1; view.px = 0; view.py = 0; view.taz = Math.PI / 6; },
+  rotate(d) { view.taz += d; },
+};
+window.Scene3D = api;
+})();
+
+</script>
+<script>
+/* ===== APP: ממשק, לובי, משחק מקומי ואונליין ===== */
+(function () {
+'use strict';
+const E = Engine, R = E.RES;
+const $ = (s) => document.querySelector(s);
+const I = ICONS.I;
+const RI = { avo: I('avo'), stone: I('stone'), metal: I('metal'), horse: I('horse'), hay: I('hay') };
+const RN = E.RES_NAME;
+const PCOL = ['#e2553c', '#2d63c8', '#8a52c9', '#f4f1ea'];
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const costIcons = (cost) => R.map((r) => RI[r].repeat(cost[r] || 0)).join('');
+const listIcons = (res) => R.filter((r) => res[r]).map((r) => res[r] + RI[r]).join(' ');
+const sumOf = (o) => R.reduce((s, r) => s + (o[r] || 0), 0);
+
+let G = null, mode = null;
+let opts = { hide: true };
+let armed = null, selT = null, sheetKind = null, sheetState = {};
+let lastViewer = -1, curtainOn = false;
+let db = null, userCap = null, uid = null, onlineOK = false, capsDone = false;
+let docData = null, gdoc = null, unsub = null, mySeat = -1, writing = Promise.resolve();
+let myName = 'שחקן';
+let lobbyS = { n: 2, names: ['שחקן 1', 'שחקן 2', 'שחקן 3', 'שחקן 4'], hide: true };
+let onlineS = { n: 2 };
+let toastT = null, diceGame = null, rollingUntil = 0, prevHand = null, winShown = null;
+let chatSeen = 0;
+
+function showErr(msg) {
+  const b = document.getElementById('errbar');
+  if (!b) return;
+  b.textContent = String(msg).slice(0, 220);
+  b.classList.remove('hidden');
+}
+window.addEventListener('error', (e) => showErr((e.message || 'error') + ' @' + String(e.filename || '').split('/').pop() + ':' + e.lineno));
+window.addEventListener('unhandledrejection', (e) => showErr('promise: ' + (e.reason && e.reason.message ? e.reason.message : e.reason)));
+
+/* ---------- אחסון מקומי ---------- */
+function saveLocal() {
+  try { localStorage.setItem('komuna:save', JSON.stringify({ opts, state: G })); } catch (_) {}
+}
+function loadLocal() {
+  try {
+    const s = JSON.parse(localStorage.getItem('komuna:save') || 'null');
+    if (s && s.state && s.state.players && s.state.hexes) return s;
+  } catch (_) {}
+  return null;
+}
+function clearLocal() { try { localStorage.removeItem('komuna:save'); } catch (_) {} }
+function dedDismissed() { try { return localStorage.getItem('komuna:ded') === '1'; } catch (_) { return false; } }
+function dedDismiss() { try { localStorage.setItem('komuna:ded', '1'); } catch (_) {} showLobby(); }
+
+/* ---------- עזרים ---------- */
+function toast(msg, ms) {
+  const t = $('#toast');
+  t.innerHTML = msg;
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), ms || 2200);
+}
+const PIPS = { 1: [[5, 5]], 2: [[3, 3], [7, 7]], 3: [[3, 3], [5, 5], [7, 7]], 4: [[3, 3], [7, 3], [3, 7], [7, 7]], 5: [[3, 3], [7, 3], [5, 5], [3, 7], [7, 7]], 6: [[3, 2.5], [7, 2.5], [3, 5], [7, 5], [3, 7.5], [7, 7.5]] };
+function dieHTML(n, cls) {
+  return '<div class="die ' + (cls || '') + '"><svg viewBox="0 0 10 10" width="100%" height="100%">' +
+    (PIPS[n] || []).map((p) => '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="0.85" fill="#222"/>').join('') + '</svg></div>';
+}
+function logoSVG() {
+  const s = 24, cols = ['#4f8a2b', '#a9713a', '#d9a93a', '#9a9a92', '#5f7f99', '#4f8a2b', '#ebd8a4'];
+  const emo = ['avo', 'horse', 'hay', 'stone', 'metal', 'avo', 'dunes'];
+  const ax = [[0, 0], [1, 0], [-1, 0], [0, 1], [-1, 1], [0, -1], [1, -1]];
+  let out = '<svg class="logo" viewBox="-62 -58 124 116" aria-hidden="true">';
+  ax.forEach((a, i) => {
+    const cx = Math.sqrt(3) * s * (a[0] + a[1] / 2) * 0.98, cy = 1.5 * s * a[1] * 0.98;
+    let pts = '';
+    for (let k = 0; k < 6; k++) {
+      const an = (60 * k - 30) * Math.PI / 180;
+      pts += (cx + Math.cos(an) * s * 0.93).toFixed(1) + ',' + (cy + Math.sin(an) * s * 0.93).toFixed(1) + ' ';
+    }
+    out += '<polygon points="' + pts + '" fill="' + cols[i] + '" stroke="#f3ead0" stroke-width="2.2" stroke-linejoin="round"/>';
+    out += '<g transform="translate(' + (cx - 11).toFixed(1) + ' ' + (cy - 11).toFixed(1) + ') scale(.92)">' + ICONS.B[emo[i]] + '</g>';
+  });
+  return out + '</svg>';
+}
+
+/* ---------- זהות הצופה ---------- */
+function myTurn() {
+  if (!G) return false;
+  if (mode === 'local') return true;
+  return mySeat >= 0 && mySeat === G.turn;
+}
+function viewer() {
+  if (!G) return 0;
+  if (mode === 'online') return mySeat;
+  if (G.phase === 'discard') {
+    const k = Object.keys(G.discard).map(Number);
+    if (k.length) return k[0];
+  }
+  return G.turn;
+}
+function responder() {
+  const T = G && G.trade;
+  if (!T) return -1;
+  if (mode === 'online') {
+    if (mySeat < 0 || mySeat === T.from) return -1;
+    if (T.to !== -1 && T.to !== mySeat) return -1;
+    return T.no.indexOf(mySeat) >= 0 ? -1 : mySeat;
+  }
+  for (let i = 0; i < G.n; i++) {
+    if (i === T.from) continue;
+    if (T.to !== -1 && T.to !== i) continue;
+    if (T.no.indexOf(i) >= 0) continue;
+    return i;
+  }
+  return -1;
+}
+
+/* ---------- ביצוע פעולות ---------- */
+function act(a) {
+  if (!G) return false;
+  const r = E.apply(G, a);
+  if (!r.ok) { toast(r.err); return false; }
+  commit(r.state);
+  return true;
+}
+function commit(ns) {
+  G = ns;
+  if (mode === 'local') saveLocal();
+  else if (mode === 'online') pushOnline(ns);
+  render();
+}
+function pushOnline(ns) {
+  if (!gdoc || !docData) return;
+  const d = JSON.parse(JSON.stringify(docData));
+  d.state = ns;
+  docData = d;
+  writing = writing.then(() => gdoc.set(d)).catch((err) => {
+    console.error(err);
+    toast('השמירה לענן נכשלה. נסו שוב.');
+  });
+}
+
+/* ---------- לובי ---------- */
+function showOverlay(html, soft) {
+  const el = $('#lobby');
+  el.className = 'overlay' + (soft ? ' soft' : '');
+  el.innerHTML = html;
+}
+function hideLobby() { $('#lobby').classList.add('hidden'); }
+function showLobby() {
+  mode = null; G = null; closeSheet();
+  Scene3D.setTargets(null, null);
+  if (unsub) { try { unsub(); } catch (_) {} unsub = null; }
+  gdoc = null; docData = null; mySeat = -1;
+  $('#curtain').classList.add('hidden'); $('#winner').classList.add('hidden');
+  const saved = loadLocal();
+  let h = '<div class="lobby">' + logoSVG();
+  if (!dedDismissed()) {
+    h += '<div class="card ded"><div class="row" style="justify-content:space-between;align-items:flex-start">' +
+      '<h3 style="margin:0">💛 למנור</h3><button class="x" data-act="dedClose" aria-label="סגור">✕</button></div>' +
+      '<p class="ded-msg">זה מוקדש למנור החמודה, המון מזל טוב, תישארי יפה, אופה, מצחיקה, חכמה ואכפתית כמו שאת, שנמשיך לשחק קטאן גם מרחוק בטירונות שלך, בפורטוגל או בשלת.<br><br>אוהב המון,<br>יפתח</p></div>';
+  }
+  h += '<p class="sub">אבוקדו, אבנים, מתכת, זילפות וחציר. בונים דרכים, בתים וקומונות, ומי שמגיע ל-10 נקודות מנצח.</p>';
+  h += '<div class="card"><h3>משחק על מכשיר אחד</h3><div class="seg" id="segN">' +
+    [2, 3, 4].map((n) => '<button data-act="lobbyN" data-n="' + n + '" class="' + (lobbyS.n === n ? 'sel' : '') + '">' + n + ' שחקנים</button>').join('') + '</div>';
+  for (let i = 0; i < lobbyS.n; i++) {
+    h += '<div class="field"><i style="background:' + PCOL[i] + '"></i><input type="text" maxlength="14" data-name="' + i + '" value="' + esc(lobbyS.names[i]) + '" aria-label="שם שחקן ' + (i + 1) + '"></div>';
+  }
+  h += '<label class="check"><input type="checkbox" id="chkHide" ' + (lobbyS.hide ? 'checked' : '') + '> הסתר קלפים בין תורות (מעבירים את המכשיר)</label>';
+  h += '<button class="btn pri wide" style="width:100%" data-act="startLocal">התחל משחק</button></div>';
+  h += '<div class="card"><h3>משחק אונליין בזמן אמת</h3>';
+  if (!capsDone) h += '<p class="note">בודק חיבור…</p>';
+  else if (onlineOK) h += '<p class="note">כל שחקן משחק מהטלפון שלו. השחקנים צריכים להיות באותו ארגון Claude ולפתוח את הדף.</p><button class="btn pri wide" style="width:100%" data-act="goOnline">כניסה למשחק אונליין</button>';
+  else h += '<p class="note">אונליין לא זמין בדף הזה כרגע. אפשר לשחק על מכשיר אחד, או לשלוח קוד משחק בהודעה.</p>';
+  h += '</div>';
+  h += '<div class="card"><div class="row">';
+  if (saved) h += '<button class="btn grow" data-act="resume">המשך משחק שמור<small>' + saved.state.players.map((p) => esc(p.name)).join(' · ') + '</small></button>';
+  h += '<button class="btn grow" data-act="codeLoad">טען קוד משחק</button></div></div></div>';
+  showOverlay(h);
+}
+
+/* ---------- אונליין ---------- */
+async function initCaps() {
+  try {
+    if (window.claude && typeof window.claude.use === 'function') {
+      db = await window.claude.use('db');
+      userCap = await window.claude.use('user');
+      uid = userCap ? await userCap.id() : null;
+    }
+  } catch (e) { db = null; }
+  onlineOK = !!(db && uid);
+  capsDone = true;
+  if (!G && mode === null && !$('#lobby').classList.contains('hidden')) showLobby();
+}
+let onlineStage = 'choice', inviteCode = null, joinErr = '', joinDigits = '', joinBusy = false;
+function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
+function openOnlineChoice() {
+  if (!onlineOK) return;
+  mode = 'online'; onlineStage = 'choice'; inviteCode = null; joinErr = ''; joinDigits = ''; joinBusy = false;
+  if (unsub) { try { unsub(); } catch (_) {} unsub = null; }
+  gdoc = null; docData = null; mySeat = -1;
+  showOnlineLobby();
+}
+function subscribeGdoc() {
+  if (unsub) { try { unsub(); } catch (_) {} }
+  unsub = gdoc.onSnapshot((snap) => {
+    docData = snap.exists ? snap.data() : null;
+    onDoc();
+  }, (err) => { toast('שגיאת חיבור: ' + (err && err.code ? err.code : '')); });
+}
+function onDoc() {
+  mySeat = -1;
+  if (docData && docData.seats) for (const k in docData.seats) if (docData.seats[k] === uid) mySeat = +k;
+  if (docData && docData.state) {
+    const ns = docData.state;
+    if (!G || G.id !== ns.id || ns.rev >= G.rev) G = ns;
+    hideLobby();
+    render();
+    if (sheetKind === 'chat') drawSheet();
+    return;
+  }
+  G = null;
+  if (!docData && onlineStage === 'enter' && joinBusy) { joinErr = 'הקוד הזה לא נמצא. בדקו שהקלדתם נכון.'; joinBusy = false; gdoc = null; if (unsub) { try { unsub(); } catch (_) {} unsub = null; } }
+  showOnlineLobby();
+}
+function sendChat(text) {
+  text = (text || '').trim().slice(0, 300);
+  if (!text || !gdoc || !docData || mySeat < 0) return;
+  const d = JSON.parse(JSON.stringify(docData));
+  const nm = (d.names && d.names[mySeat]) || myName;
+  d.chat = (d.chat || []).concat([{ p: mySeat, n: nm, t: text, ts: Date.now() }]).slice(-60);
+  docData = d;
+  writing = writing.then(() => gdoc.set(d)).catch(() => toast('שליחת ההודעה נכשלה'));
+}
+function codeDisp(c) { return c ? c.slice(0, 3) + ' ' + c.slice(3) : ''; }
+function showOnlineLobby() {
+  let h = '<div class="lobby">' + logoSVG() + '<h1>אונליין</h1>';
+  if (onlineStage === 'choice') {
+    h += '<div class="card"><h3>משחק עם חבר</h3>' +
+      '<button class="btn pri wide" style="width:100%" data-act="onChoiceInvite">' + I('share') + ' להזמין חבר</button>' +
+      '<div style="height:8px"></div>' +
+      '<button class="btn wide" style="width:100%" data-act="onChoiceEnter">' + I('import') + ' הקלד קוד שקיבלתי</button></div>';
+  } else if (onlineStage === 'create') {
+    if (!docData) {
+      h += '<div class="card"><h3>הזמנת חבר</h3><div class="field"><input type="text" maxlength="14" id="myName" value="' + esc(myName) + '" aria-label="השם שלי"></div>' +
+        '<div class="seg">' + [2, 3, 4].map((n) => '<button data-act="onN" data-n="' + n + '" class="' + (onlineS.n === n ? 'sel' : '') + '">' + n + ' שחקנים</button>').join('') + '</div>' +
+        '<button class="btn pri wide" style="width:100%" data-act="onCreateGo">צור קוד הזמנה</button></div>';
+    } else {
+      h += codeCard(docData) + waitCard(docData);
+    }
+  } else if (onlineStage === 'enter') {
+    if (!gdoc) {
+      h += '<div class="card"><h3>הצטרפות עם קוד</h3><div class="field"><input type="text" maxlength="14" id="myName" value="' + esc(myName) + '" aria-label="השם שלי"></div>' +
+        '<input type="text" id="codeDigits" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="123456" value="' + esc(joinDigits) + '" style="font-size:28px;letter-spacing:6px;text-align:center;font-family:\'Suez One\',Georgia,serif" aria-label="קוד בן 6 ספרות">' +
+        (joinErr ? '<p class="err" style="margin-top:8px">' + esc(joinErr) + '</p>' : '') +
+        '<div style="height:8px"></div><button class="btn pri wide" style="width:100%" data-act="onJoinGo" ' + (joinDigits.length === 6 ? '' : 'disabled') + '>הצטרף</button></div>';
+    } else if (!docData) {
+      h += '<div class="card"><p class="note">מתחבר עם הקוד ' + codeDisp(inviteCode) + '…</p></div>';
+    } else {
+      h += codeCard(docData) + waitCard(docData);
+    }
+  }
+  h += '<div class="card"><button class="btn wide" style="width:100%" data-act="lobbyBack">חזרה</button></div></div>';
+  showOverlay(h);
+}
+function codeCard(d) {
+  return '<div class="card"><h3>קוד המשחק</h3><p class="note">שלחו את הקוד הזה לחבר שלכם, הוא יקליד אותו ב"הקלד קוד".</p>' +
+    '<div class="row" style="margin-top:4px"><input readonly id="inviteOut" value="' + esc(d.code || inviteCode || '') + '" style="font-size:30px;letter-spacing:8px;text-align:center;font-family:\'Suez One\',Georgia,serif" class="grow">' +
+    '<button class="btn" style="flex:none" data-act="copyInvite">העתק</button></div></div>';
+}
+function waitCard(d) {
+  const taken = d.seats || {};
+  let h = '<div class="card"><h3>מחכים לשחקנים (' + Object.keys(taken).length + '/' + d.n + ')</h3>';
+  for (let i = 0; i < d.n; i++) {
+    h += '<div class="field"><i style="background:' + PCOL[i] + '"></i><b class="grow">' +
+      (taken[i] ? esc((d.names && d.names[i]) || 'שחקן') + (taken[i] === uid ? ' (אני)' : '') : 'מקום פנוי') + '</b>';
+    if (!taken[i] && mySeat < 0) h += '<button class="btn" style="flex:none;min-width:90px" data-act="onJoin" data-i="' + i + '">שב כאן</button>';
+    h += '</div>';
+  }
+  if (mySeat === 0 && Object.keys(taken).length >= 2) h += '<button class="btn pri wide" style="width:100%;margin-top:6px" data-act="onStartNow">התחל עכשיו עם מי שנמצא</button>';
+  h += '</div>';
+  return h;
+}
+function readName() {
+  const el = $('#myName');
+  if (el && el.value.trim()) myName = el.value.trim().slice(0, 14);
+}
+function onlineCreateGo() {
+  readName();
+  inviteCode = genCode();
+  gdoc = db.doc('games/' + inviteCode);
+  subscribeGdoc();
+  const d = { n: onlineS.n, seats: { 0: uid }, names: { 0: myName }, state: null, code: inviteCode };
+  docData = d;
+  gdoc.set(d).catch(() => toast('לא הצלחתי ליצור משחק'));
+  showOnlineLobby();
+}
+function onlineJoinGo() {
+  if (joinDigits.length !== 6) return;
+  readName();
+  joinErr = ''; joinBusy = true;
+  inviteCode = joinDigits;
+  gdoc = db.doc('games/' + inviteCode);
+  subscribeGdoc();
+  showOnlineLobby();
+}
+function namesOf(d) {
+  const out = [];
+  for (let i = 0; i < d.n; i++) out.push((d.names && d.names[i]) || 'שחקן ' + (i + 1));
+  return out;
+}
+function onlineJoin(seat) {
+  readName();
+  if (!docData || docData.seats[seat]) return;
+  const d = JSON.parse(JSON.stringify(docData));
+  d.seats[seat] = uid;
+  d.names[seat] = myName;
+  if (Object.keys(d.seats).length >= d.n) d.state = E.newGame(namesOf(d));
+  docData = d;
+  gdoc.set(d).catch(() => toast('לא הצלחתי להצטרף'));
+}
+function onlineStartNow() {
+  const d = JSON.parse(JSON.stringify(docData));
+  const ks = Object.keys(d.seats).map(Number).sort();
+  if (ks.length < 2) return;
+  const seats = {}, names = {};
+  ks.forEach((k, i) => { seats[i] = d.seats[k]; names[i] = d.names[k]; });
+  d.seats = seats; d.names = names; d.n = ks.length;
+  d.state = E.newGame(namesOf(d));
+  docData = d;
+  gdoc.set(d).catch(() => toast('לא הצלחתי להתחיל'));
+}
+
+/* ---------- התחלת משחק מקומי ---------- */
+function startLocal() {
+  const names = [];
+  for (let i = 0; i < lobbyS.n; i++) names.push((lobbyS.names[i] || '').trim() || 'שחקן ' + (i + 1));
+  opts = { hide: lobbyS.hide };
+  mode = 'local';
+  G = E.newGame(names);
+  lastViewer = -1; armed = null;
+  saveLocal();
+  hideLobby();
+  render();
+  toast('כל שחקן מציב בית ודרך. מתחיל: ' + esc(names[0]), 3200);
+}
+function resumeLocal() {
+  const s = loadLocal();
+  if (!s) return;
+  opts = s.opts || { hide: true };
+  mode = 'local'; G = s.state; lastViewer = -1; armed = null;
+  hideLobby();
+  render();
+}
+
+/* ---------- ציור הממשק ---------- */
+function render() {
+  if (!G) return;
+  try { Scene3D.sync(G); } catch (e) { console.error(e); showErr('3D: ' + e.message); }
+  if (G.phase !== 'main' || !myTurn()) armed = null;
+  checkCurtain();
+  renderTop();
+  renderHand();
+  updateTargets();
+  renderActions();
+  if (G.id !== diceGame) { diceGame = G.id; rollingUntil = 0; lastRollShown = G.rollN; }
+  rollAnim();
+  drawDice();
+  showGains();
+  autoSheets();
+  if (sheetKind && sheetKind !== 'codeShow' && sheetKind !== 'codeLoad') drawSheet();
+  checkWinner();
+}
+function statusText() {
+  const n = esc(G.players[G.turn].name);
+  const ic = (k) => '<span class="sic">' + I(k) + '</span>';
+  switch (G.phase) {
+    case 'setup_house': return ic('house') + n + ': הצב בית (בחר נקודה מסומנת)';
+    case 'setup_road': return ic('road') + n + ': הצב דרך צמודה לבית';
+    case 'roll': return ic('dice') + n + ': הטל קוביות';
+    case 'main': return ic('commune') + n + ': בנה, סחור או סיים תור' + (G.trade ? ' · יש הצעת סחר' : '');
+    case 'robber': return ic('robber') + n + ': הזז את השודד למשבצת אחרת';
+    case 'roadbuild': return ic('road') + n + ': בנה דרך חינם (נותרו ' + G.rb + ')';
+    case 'discard': return ic('layers') + 'זורקים חצי מהקלפים: ' + Object.keys(G.discard).map((k) => esc(G.players[k].name)).join(', ');
+    case 'over': return ic('trophy') + 'המשחק נגמר';
+  }
+  return '';
+}
+function renderTop() {
+  const v = viewer();
+  $('#players').innerHTML = G.players.map((P, i) => {
+    const vp = E.vpOf(G, i, i === v && !curtainOn && (mode === 'online' || G.turn === i));
+    const badges = (G.longest.p === i ? '<span class="badge" title="הדרך הארוכה">' + I('road') + '2</span>' : '') + (G.army.p === i ? '<span class="badge" title="הצבא הגדול">' + I('shield') + '2</span>' : '');
+    const devs = P.dev.length + P.newDev.length;
+    return '<div class="pcard ' + (G.turn === i && G.phase !== 'over' ? 'turn' : '') + '" style="--pc:' + PCOL[i] + '"><div class="nm">' + esc(P.name) + (mode === 'online' && i === mySeat ? ' (אני)' : '') +
+      '</div><div class="vp">' + vp + '<small>נק׳</small>' + badges + '</div><div class="st" title="קלפי משאב · קלפים מיוחדים · אבירים · אורך דרך">' + I('layers') + E.total(P.res) + I('card') + devs + I('shield') + P.knights + I('road') + (G.lens ? G.lens[i] : 0) + '</div></div>';
+  }).join('');
+  $('#status').innerHTML = statusText();
+  const last = G.log[G.log.length - 1] || '';
+  $('#ticker').textContent = last;
+}
+function renderHand() {
+  const v = viewer();
+  const hidden = v < 0 || curtainOn;
+  const P = hidden ? null : G.players[v];
+  const rat = hidden ? null : E.ratios(G, v);
+  let h = '';
+  R.forEach((r) => {
+    h += '<div class="chip" style="--rc:var(--c-' + r + ')" title="' + RN[r] + '"><span class="ic">' + RI[r] + '</span><span class="n">' + (P ? P.res[r] : '·') + '</span>' +
+      (rat && rat[r] < 4 ? '<span class="rt">' + rat[r] + ':1</span>' : '') + '</div>';
+  });
+  const dn = P ? P.dev.length + P.newDev.length : 0;
+  const canPlay = P && P.dev.some((c) => c !== 'vp') && !G.devPlayed && myTurn() && (G.phase === 'main' || G.phase === 'roll');
+  h += '<button class="chip dev ' + (canPlay ? 'dot' : '') + '" data-act="devs" title="קלפים מיוחדים">' + I('card') + '<span class="n">' + (P ? dn : '·') + '</span></button>';
+  $('#hand').innerHTML = h;
+}
+function btn(cls, act, label, sub, extra) {
+  return '<button class="btn ' + cls + '" data-act="' + act + '" ' + (extra || '') + '><span class="bl">' + label + '</span>' + (sub ? '<small>' + sub + '</small>' : '') + '</button>';
+}
+function renderActions() {
+  const el = $('#actions');
+  if (curtainOn) { el.innerHTML = ''; return; }
+  const v = viewer(), mt = myTurn();
+  let h = '';
+  const P = G.players[G.turn];
+  if (G.phase === 'over') {
+    h = btn('pri wide', 'winner', 'תוצאות המשחק');
+  } else if (mode === 'online' && mySeat < 0) {
+    h = '<div id="hint">אתם צופים במשחק.</div>';
+  } else if (G.phase === 'discard') {
+    h = '<div id="hint">' + (G.discard[v] !== undefined ? 'צריך לזרוק ' + G.discard[v] + ' קלפים.' : 'ממתינים לשחקנים שזורקים קלפים…') + '</div>';
+  } else if (!mt) {
+    h = '<div id="hint">ממתינים ל' + esc(P.name) + '…</div>';
+    if (G.trade && G.trade.from === v) h += btn('wide', 'cancelTrade', 'בטל הצעת סחר');
+  } else if (selT) {
+    h = '<div id="hint">בחרתם נקודה. אשרו כדי לבצע, או לחצו על נקודה אחרת.</div>' + btn('pri', 'confirmSel', I('check') + ' אשר', '', 'style="flex-basis:60%"') + btn('', 'unsel', 'בטל בחירה');
+  } else if (G.phase === 'setup_house' || G.phase === 'setup_road') {
+    h = '<div id="hint">' + (G.phase === 'setup_house' ? 'בחרו נקודה מסומנת בצהוב על הלוח. הבית השני מעניק משאבים מהמשבצות שסביבו.' : 'בחרו את הדרך שתצא מהבית שהצבתם.') + '</div>';
+  } else if (G.phase === 'roll') {
+    h = btn('pri wide', 'roll', I('dice') + ' הטל קוביות');
+    if (P.dev.indexOf('knight') >= 0 && !G.devPlayed) h += btn('wide', 'devs', I('shield') + ' שחק אביר לפני ההטלה');
+  } else if (G.phase === 'robber') {
+    h = '<div id="hint">לחצו על משבצת כדי להזיז אליה את השודד.</div>';
+  } else if (G.phase === 'roadbuild') {
+    h = '<div id="hint">בחרו איפה לבנות דרך (חינם). נותרו ' + G.rb + '.</div>';
+  } else if (G.phase === 'main') {
+    if (armed) {
+      const t = { road: 'דרך', house: 'בית', commune: 'קומונה' }[armed];
+      h = '<div id="hint">בחרו על הלוח היכן לבנות: ' + t + '.</div>' + btn('wide', 'unarm', 'ביטול');
+    } else {
+      const C = E.COST, res = P.res;
+      const af = (c) => E.canAfford(res, c) ? '' : 'dim';
+      h += btn(af(C.road) + (armed === 'road' ? ' armed' : ''), 'arm', I('road') + ' דרך', costIcons(C.road), 'data-k="road"');
+      h += btn(af(C.house), 'arm', I('house') + ' בית', costIcons(C.house), 'data-k="house"');
+      h += btn(af(C.commune), 'arm', I('commune') + ' קומונה', costIcons(C.commune), 'data-k="commune"');
+      h += btn(af(C.dev), 'buyDev', I('card') + ' קלף מיוחד', costIcons(C.dev));
+      h += btn('', 'trade', I('trade') + ' סחר', G.trade ? 'הצעה פעילה' : '');
+      h += btn('pri', 'endTurn', 'סיים תור');
+      if (G.trade && G.trade.from === G.turn) h += btn('wide', 'cancelTrade', 'בטל הצעת סחר');
+    }
+  }
+  el.innerHTML = h;
+}
+function drawDice() {
+  const box = $('#dice');
+  if (G.id !== diceGame) { diceGame = G.id; rollingUntil = 0; lastRollShown = G.rollN; }
+  if (Date.now() < rollingUntil) return;
+  box.innerHTML = G.dice ? dieHTML(G.dice[0]) + dieHTML(G.dice[1]) : '';
+}
+let lastRollShown = -1;
+function rollAnim() {
+  if (!G || G.id !== diceGame || !G.dice || G.rollN === lastRollShown) return;
+  lastRollShown = G.rollN;
+  const box = $('#dice');
+  const delays = [70, 75, 85, 100, 120, 150, 190, 240, 300];
+  const total = delays.reduce((a, b) => a + b, 0);
+  rollingUntil = Date.now() + total + 260;
+  const final = G.dice.slice();
+  let step = 0;
+  const rnd6 = () => 1 + Math.floor(Math.random() * 6);
+  function tick() {
+    const last = step >= delays.length - 1;
+    const a = last ? final[0] : rnd6(), b = last ? final[1] : rnd6();
+    box.innerHTML = dieHTML(a, 'roll') + dieHTML(b, 'roll');
+    const kids = box.children;
+    for (let i = 0; i < kids.length; i++) {
+      const rot = (Math.random() * 50 - 25) + (last ? 0 : 0);
+      kids[i].style.transform = last ? 'rotate(0deg) scale(1)' : 'rotate(' + rot.toFixed(1) + 'deg) scale(' + (0.92 + Math.random() * 0.14).toFixed(2) + ')';
+    }
+    step++;
+    if (step < delays.length) setTimeout(tick, delays[step - 1]);
+    else { rollingUntil = 0; setTimeout(() => { if (G) drawDice(); }, 20); }
+  }
+  tick();
+}
+function showGains() {
+  const v = viewer();
+  if (v < 0 || curtainOn) { prevHand = null; return; }
+  const h = G.players[v].res;
+  if (prevHand && prevHand.id === G.id && prevHand.v === v && prevHand.roll !== G.rollN) {
+    const d = [];
+    R.forEach((r) => { const x = h[r] - prevHand.h[r]; if (x > 0) d.push('+' + x + RI[r]); });
+    if (d.length) toast('קיבלת: ' + d.join('  '), 2600);
+  }
+  prevHand = { id: G.id, v, h: Object.assign({}, h), roll: G.rollN };
+}
+function checkWinner() {
+  if (G.phase === 'over') {
+    if (winShown !== G.id) { winShown = G.id; openWinner(); }
+  } else winShown = null;
+}
+function openWinner() {
+  const w = G.players[G.winner];
+  const rows = G.players.map((P, i) => ({ i, P, vp: E.vpOf(G, i, true) })).sort((a, b) => b.vp - a.vp)
+    .map((x) => '<div class="scoreline"><span>' + esc(x.P.name) + '</span><span>' + x.vp + ' נק׳</span></div>').join('');
+  const el = $('#winner');
+  el.className = 'overlay soft';
+  el.innerHTML = '<div class="lobby"><div class="card win"><div class="trophy">' + I('trophy') + '</div><h2>' + esc(w.name) + ' ניצח!</h2><p class="note">בנה את הקומונה הגדולה ביותר.</p>' + rows +
+    '<div class="row" style="margin-top:12px"><button class="btn grow" data-act="winClose">סגור</button><button class="btn pri grow" data-act="newAsk">משחק חדש</button></div></div></div>';
+}
+
+/* ---------- וילון (העברת מכשיר) ---------- */
+function checkCurtain() {
+  if (mode !== 'local' || !opts.hide || G.n < 2) return;
+  if (G.phase === 'over' || G.phase.indexOf('setup') === 0) { lastViewer = viewer(); return; }
+  const v = viewer();
+  if (v !== lastViewer && !curtainOn) {
+    curtainOn = true;
+    const c = $('#curtain');
+    c.className = 'overlay soft';
+    c.innerHTML = '<h2>' + esc(G.players[v].name) + '</h2><p style="max-width:300px;line-height:1.4">העבירו את המכשיר. הקלפים מוסתרים עד שהשחקן לוחץ.</p><button class="btn pri" style="flex:none;width:260px" data-act="curtainOk">אני ' + esc(G.players[v].name) + ', המשך</button>';
+  }
+}
+
+/* ---------- יעדים על הלוח ---------- */
+function computeTargets() {
+  if (!G || G.phase === 'over' || curtainOn || !myTurn()) return null;
+  const ph = G.phase, me = G.turn;
+  if (ph === 'setup_house') return { kind: 'v', ids: E.setupHouses(G) };
+  if (ph === 'setup_road') return { kind: 'e', ids: E.setupRoads(G) };
+  if (ph === 'roadbuild') return { kind: 'e', ids: E.legalRoads(G, me) };
+  if (ph === 'robber') { const ids = []; for (let i = 0; i < 19; i++) if (i !== G.robber) ids.push(i); return { kind: 'h', ids }; }
+  if (ph === 'main' && armed === 'road') return { kind: 'e', ids: E.legalRoads(G, me) };
+  if (ph === 'main' && armed === 'house') return { kind: 'v', ids: E.legalHouses(G, me) };
+  if (ph === 'main' && armed === 'commune') return { kind: 'v', ids: E.legalCommunes(G, me) };
+  return null;
+}
+function updateTargets() {
+  const t = computeTargets();
+  if (selT && (!t || t.kind !== selT.kind || t.ids.indexOf(selT.id) < 0)) selT = null;
+  Scene3D.setSelected(selT);
+  if (t && t.ids.length && !sheetKind) Scene3D.setTargets(t.kind, t.ids);
+  else Scene3D.setTargets(null, null);
+}
+function confirmSel() {
+  if (!selT || !G || !myTurn()) return;
+  const hit = selT, ph = G.phase;
+  selT = null;
+  Scene3D.setSelected(null);
+  if (hit.kind === 'v') {
+    if (ph === 'setup_house' || armed === 'house') { if (act({ t: 'house', v: hit.id })) armed = null; }
+    else if (armed === 'commune') { if (act({ t: 'commune', v: hit.id })) armed = null; }
+  } else if (hit.kind === 'e') {
+    if (ph === 'setup_road' || ph === 'roadbuild') act({ t: 'road', e: hit.id });
+    else if (armed === 'road') { if (act({ t: 'road', e: hit.id })) armed = null; }
+  } else if (hit.kind === 'h' && ph === 'robber') {
+    const vic = E.robberVictims(G, hit.id, G.turn);
+    if (vic.length > 1) openSheet('victim', { h: hit.id, vic });
+    else act({ t: 'robber', h: hit.id, r: Math.random() });
+  }
+  render();
+}
+function onBoardTap(hit) {
+  if (!G || !myTurn() || sheetKind || curtainOn) return;
+  const t = computeTargets();
+  if (!t || t.kind !== hit.kind) return;
+  if (selT && selT.kind === hit.kind && selT.id === hit.id) { confirmSel(); return; }
+  selT = { kind: hit.kind, id: hit.id };
+  Scene3D.setSelected(selT);
+  renderActions();
+}
+
+/* ---------- חלונות תחתונים ---------- */
+function openSheet(kind, st) { sheetKind = kind; sheetState = st || {}; drawSheet(); updateTargets(); }
+function closeSheet() {
+  sheetKind = null; sheetState = {};
+  const w = $('#sheetWrap');
+  w.classList.remove('show');
+  setTimeout(() => { if (!sheetKind) w.classList.add('hidden'); }, 300);
+  if (G) updateTargets();
+}
+const X = '<button class="x" data-act="close" aria-label="סגור">✕</button>';
+function stp(r, val, pfx, max) {
+  return '<div class="stp" style="--rc:var(--c-' + r + ')"><span class="ic">' + RI[r] + '</span><span class="v">' + val + '</span><div class="pm">' +
+    '<button data-act="' + pfx + '+" data-r="' + r + '" ' + (val >= max ? 'disabled' : '') + ' aria-label="הוסף ' + RN[r] + '">+</button>' +
+    '<button data-act="' + pfx + '-" data-r="' + r + '" ' + (val <= 0 ? 'disabled' : '') + ' aria-label="הפחת ' + RN[r] + '">−</button></div></div>';
+}
+const DEV_INFO = {
+  knight: [I('shield'), 'אביר', 'מזיז את השודד וגונב קלף. שלושה אבירים = הצבא הגדול (2 נק׳).'],
+  roads: [I('road'), 'בניית דרכים', 'בונים 2 דרכים בלי לשלם.'],
+  plenty: [I('spark'), 'בחירת 2 משאבים', 'לוקחים מהבנק כל 2 משאבים שרוצים.'],
+  monopoly: [I('crown'), 'מונופול', 'בוחרים משאב, וכל השחקנים נותנים לך את כל הקלפים שלו.'],
+  vp: [I('star'), 'נקודת ניצחון', 'נספרת אוטומטית. לא צריך לשחק אותה.'],
+};
+const SHEETS = {
+  menu() {
+    const unread = Math.max(0, ((docData && docData.chat) || []).length - chatSeen);
+    return '<h2>תפריט ' + X + '</h2><div class="row" style="flex-direction:column;align-items:stretch">' +
+      btn('', 'cam', I('zoom') + ' אפס זום ומיקום') + btn('', 'costs', I('list') + ' מחירון וחוקים') + btn('', 'log', I('list') + ' יומן המשחק') +
+      (mode === 'online' ? btn('', 'chat', I('chat') + ' צ׳אט' + (unread ? ' (' + unread + ')' : '')) : '') +
+      btn('', 'codeShow', I('share') + ' שמור / שתף קוד משחק') + (mode === 'local' ? btn('', 'codeLoad', I('import') + ' טען קוד משחק') : '') +
+      (mode === 'local' ? btn('', 'toLobby', I('home') + ' חזרה לתפריט הראשי') : '') + btn('warn', 'newAsk', 'משחק חדש') + '</div>';
+  },
+  chat() {
+    const v = viewer();
+    const msgs = (docData && docData.chat) || [];
+    const body = msgs.length
+      ? msgs.map((m) => '<div class="chat-msg ' + (m.p === mySeat ? 'me' : '') + '"><b style="color:' + PCOL[m.p] + '">' + esc(m.n) + '</b><span>' + esc(m.t) + '</span></div>').join('')
+      : '<p class="note">אין עדיין הודעות. כתבו משהו למטה.</p>';
+    return '<h2>צ׳אט ' + X + '</h2><div id="chatBody">' + body + '</div>' +
+      '<div class="row" style="margin-top:10px"><input type="text" id="chatIn" maxlength="300" placeholder="כתבו הודעה…" class="grow" style="width:auto"><button class="btn pri" style="flex:none" data-act="sendChat">שלח</button></div>';
+  },
+  costs() {
+    const C = E.COST;
+    const rows = [[I('road') + ' דרך', C.road], [I('house') + ' בית', C.house], [I('commune') + ' קומונה (שדרוג בית)', C.commune], [I('card') + ' קלף מיוחד', C.dev]]
+      .map((x) => '<div class="cost-row"><span>' + x[0] + '</span><span>' + costIcons(x[1]) + '</span></div>').join('');
+    return '<h2>מחירון וחוקים ' + X + '</h2>' + rows +
+      '<h3>נקודות</h3><p class="note">בית = 1. קומונה = 2. הדרך הארוכה ביותר (5 ומעלה) = 2. הצבא הגדול (3 אבירים ומעלה) = 2. נקודת ניצחון מקלף = 1. מי שמגיע ל-10 בתור שלו מנצח.</p>' +
+      '<h3>סיבוב</h3><p class="note">מטילים קוביות וכל משבצת עם המספר מייצרת משאב לבתים ולקומונות שלידה (קומונה נותנת כפול). על 7 אין ייצור: מי שיש לו יותר מ-7 קלפים זורק חצי, והשחקן מזיז את השודד וגונב קלף.</p>' +
+      '<h3>בנייה</h3><p class="note">בית חייב להיות מחובר לדרך שלך ובמרחק של לפחות דרך אחת מכל בית אחר. דרך חייבת להתחבר לדרך או לבית שלך. מותר לשחק קלף מיוחד אחד בתור, ולא באותו תור שקנית אותו.</p>' +
+      '<h3>סחר</h3><p class="note">מול הבנק 4 ל-1. נמל כללי 3:1, ונמל של משאב 2:1. סחר בין שחקנים: מציעים והשני מאשר.</p>';
+  },
+  log() {
+    return '<h2>יומן המשחק ' + X + '</h2>' + G.log.slice().reverse().map((l) => '<div class="log-line">' + esc(l) + '</div>').join('');
+  },
+  devs() {
+    const v = viewer(), P = G.players[v];
+    const cnt = {}, fresh = {};
+    P.dev.forEach((c) => { cnt[c] = (cnt[c] || 0) + 1; });
+    P.newDev.forEach((c) => { fresh[c] = (fresh[c] || 0) + 1; });
+    const canPlay = myTurn() && !G.devPlayed && (G.phase === 'main' || G.phase === 'roll');
+    let h = '<h2>קלפים מיוחדים ' + X + '</h2>';
+    const S = sheetState;
+    if (S.pick === 'plenty') {
+      h += '<h3>בחרו 2 משאבים (' + (S.sel || []).length + '/2)</h3><div class="rlist">' + R.map((r) =>
+        '<button class="rbtn" style="--rc:var(--c-' + r + ')" data-act="plentyPick" data-r="' + r + '"><span class="ic">' + RI[r] + '</span><small>' + RN[r] + '</small></button>').join('') + '</div>' +
+        '<p class="note">' + ((S.sel || []).map((r) => RI[r]).join(' ') || 'לחצו על משאב') + '</p>' + btn('wide', 'devBack', 'חזרה');
+      return h;
+    }
+    if (S.pick === 'monopoly') {
+      h += '<h3>על איזה משאב?</h3><div class="rlist">' + R.map((r) =>
+        '<button class="rbtn" style="--rc:var(--c-' + r + ')" data-act="monoPick" data-r="' + r + '"><span class="ic">' + RI[r] + '</span><small>' + RN[r] + '</small></button>').join('') + '</div>' + btn('wide', 'devBack', 'חזרה');
+      return h;
+    }
+    const keys = Object.keys(DEV_INFO);
+    let any = false;
+    keys.forEach((k) => {
+      const c = cnt[k] || 0, f = fresh[k] || 0;
+      if (!c && !f) return;
+      any = true;
+      const i = DEV_INFO[k];
+      h += '<div class="dev-item"><span class="devic">' + i[0] + '</span><div class="t"><b>' + i[1] + ' ×' + (c + f) + '</b><span>' + i[2] + (f ? ' (' + f + ' חדש: אפשר לשחק בתור הבא)' : '') + '</span></div>';
+      if (k !== 'vp' && c) h += '<button class="btn" style="flex:none;min-width:74px" data-act="play" data-c="' + k + '" ' + (canPlay ? '' : 'disabled') + '>שחק</button>';
+      h += '</div>';
+    });
+    if (!any) h += '<p class="note">אין לך קלפים מיוחדים. אפשר לקנות בעלות ' + costIcons(E.COST.dev) + '.</p>';
+    else if (!canPlay) h += '<p class="note">אפשר לשחק קלף רק בתור שלך, וקלף אחד בכל תור.</p>';
+    return h;
+  },
+  victim() {
+    const S = sheetState;
+    return '<h2>ממי לגנוב? ' + X + '</h2><div class="row" style="flex-direction:column;align-items:stretch">' +
+      S.vic.map((p) => btn('', 'victim', esc(G.players[p].name), E.total(G.players[p].res) + ' קלפים', 'data-p="' + p + '"')).join('') + '</div>';
+  },
+  discard() {
+    const S = sheetState, p = S.p, P = G.players[p], need = G.discard[p] || 0, sel = S.sel || {};
+    const s = sumOf(sel);
+    return '<h2>זורקים ' + need + ' קלפים</h2><p class="note">' + esc(P.name) + ': יש לך יותר מ-7 קלפים והשודד הופיע. בחרו מה לזרוק.</p><div class="stepper">' +
+      R.map((r) => stp(r, sel[r] || 0, 'd', P.res[r])).join('') + '</div><div style="margin-top:14px">' +
+      '<button class="btn pri wide" style="width:100%" data-act="dGo" ' + (s === need ? '' : 'disabled') + '>' + (s === need ? 'זרוק' : 'נבחרו ' + s + ' מתוך ' + need) + '</button></div>';
+  },
+  trade() {
+    const S = sheetState, v = viewer(), P = G.players[v], rat = E.ratios(G, v);
+    let h = '<h2>סחר ' + X + '</h2><div class="tabs"><button class="tab ' + (S.tab === 'bank' ? 'sel' : '') + '" data-act="tab" data-v="bank">בנק ונמלים</button><button class="tab ' + (S.tab === 'pl' ? 'sel' : '') + '" data-act="tab" data-v="pl">שחקן</button></div>';
+    if (S.tab === 'bank') {
+      h += '<h3>אני נותן</h3><div class="rlist">' + R.map((r) => '<button class="rbtn ' + (S.give === r ? 'sel' : '') + '" style="--rc:var(--c-' + r + ')" data-act="bGive" data-r="' + r + '" ' + (P.res[r] < rat[r] ? 'disabled' : '') + '><span class="ic">' + RI[r] + '</span><span class="n">' + P.res[r] + '</span><small>' + rat[r] + ':1</small></button>').join('') + '</div>';
+      h += '<h3>אני מקבל (1)</h3><div class="rlist">' + R.map((r) => '<button class="rbtn ' + (S.get === r ? 'sel' : '') + '" style="--rc:var(--c-' + r + ')" data-act="bGet" data-r="' + r + '" ' + (S.give === r ? 'disabled' : '') + '><span class="ic">' + RI[r] + '</span><small>בבנק ' + G.bank[r] + '</small></button>').join('') + '</div>';
+      const ok = S.give && S.get && S.give !== S.get && P.res[S.give] >= rat[S.give] && G.bank[S.get] > 0;
+      h += '<div style="margin-top:14px"><button class="btn pri wide" style="width:100%" data-act="bGo" ' + (ok ? '' : 'disabled') + '>' + (ok ? 'החלף ' + rat[S.give] + RI[S.give] + ' ב-1' + RI[S.get] : 'בחרו מה לתת ומה לקבל') + '</button></div>';
+      h += '<p class="note">היחס הרגיל 4:1. בית או קומונה על נמל משפרים את היחס (המספר מתחת לכל משאב).</p>';
+    } else {
+      h += '<h3>אני נותן</h3><div class="stepper">' + R.map((r) => stp(r, S.pg[r] || 0, 'pg', P.res[r])).join('') + '</div>';
+      h += '<h3>אני מבקש</h3><div class="stepper">' + R.map((r) => stp(r, S.pw[r] || 0, 'pw', 9)).join('') + '</div>';
+      if (G.n > 2) {
+        h += '<h3>למי</h3><div class="seg"><button class="' + (S.to === -1 ? 'sel' : '') + '" data-act="to" data-i="-1">כולם</button>' +
+          G.players.map((Q, i) => (i === v ? '' : '<button class="' + (S.to === i ? 'sel' : '') + '" data-act="to" data-i="' + i + '">' + esc(Q.name) + '</button>')).join('') + '</div>';
+      }
+      const ok = sumOf(S.pg) > 0 && sumOf(S.pw) > 0;
+      h += '<div style="margin-top:14px"><button class="btn pri wide" style="width:100%" data-act="offer" ' + (ok ? '' : 'disabled') + '>שלח הצעה</button></div>';
+    }
+    return h;
+  },
+  trade_resp() {
+    const T = G.trade, p = sheetState.p;
+    if (!T) return '';
+    const Q = G.players[p], F = G.players[T.from];
+    const can = E.canAfford(Q.res, T.get);
+    return '<h2>הצעת סחר</h2><p style="font-size:17px;line-height:1.5"><b>' + esc(F.name) + '</b> מציע ל<b>' + esc(Q.name) + '</b>:<br>נותן: <b>' + listIcons(T.give) + '</b><br>ורוצה: <b>' + listIcons(T.get) + '</b></p>' +
+      (can ? '' : '<p class="err">אין לך מספיק קלפים כדי לקבל.</p>') +
+      '<div class="row"><button class="btn pri grow" data-act="accept" ' + (can ? '' : 'disabled') + '>קבל</button><button class="btn grow" data-act="decline">דחה</button></div>';
+  },
+  confirmNew() {
+    return '<h2>משחק חדש? ' + X + '</h2><p class="note">' + (mode === 'online' ? 'המשחק הנוכחי יימחק לכל השחקנים.' : 'ההתקדמות במשחק הנוכחי תאבד.') + '</p><div class="row"><button class="btn warn grow" data-act="newGo">כן, משחק חדש</button><button class="btn grow" data-act="close">ביטול</button></div>';
+  },
+  codeShow() {
+    const S = sheetState;
+    return '<h2>קוד משחק ' + X + '</h2><p class="note">שולחים את הקוד בהודעה, והמקבל בוחר "טען קוד משחק". כך אפשר להמשיך משחק גם בלי חיבור אונליין. ' + (mode === 'local' ? '' : 'שימו לב: הקוד חושף את הקלפים של כולם.') + '</p><textarea readonly id="codeOut">' + esc(S.code || 'מכין קוד…') + '</textarea><div class="row" style="margin-top:8px"><button class="btn pri grow" data-act="copyCode">העתק</button></div>';
+  },
+  codeLoad() {
+    const S = sheetState;
+    return '<h2>טעינת קוד משחק ' + X + '</h2><textarea id="codeIn" placeholder="הדביקו כאן את הקוד"></textarea>' + (S.err ? '<p class="err">' + esc(S.err) + '</p>' : '') + '<div class="row" style="margin-top:8px"><button class="btn pri grow" data-act="loadCode">טען</button></div>';
+  },
+};
+function drawSheet() {
+  if (!sheetKind) return;
+  const f = SHEETS[sheetKind];
+  const html = f ? f() : '';
+  if (!html) { closeSheet(); return; }
+  const keepIn = sheetKind === 'chat' ? ($('#chatIn') ? $('#chatIn').value : '') : '';
+  $('#sheet').innerHTML = html;
+  const w = $('#sheetWrap');
+  w.classList.remove('hidden');
+  requestAnimationFrame(() => requestAnimationFrame(() => w.classList.add('show')));
+  if (sheetKind === 'chat') {
+    chatSeen = ((docData && docData.chat) || []).length;
+    const body = $('#chatBody');
+    if (body) body.scrollTop = body.scrollHeight;
+    const inp = $('#chatIn');
+    if (inp && keepIn) inp.value = keepIn;
+  }
+}
+function autoSheets() {
+  if (!G) return;
+  if (G.phase === 'discard') {
+    let need = -1;
+    if (mode === 'local') need = Number(Object.keys(G.discard)[0]);
+    else if (G.discard[mySeat] !== undefined) need = mySeat;
+    if (need >= 0 && !curtainOn && sheetKind !== 'discard') openSheet('discard', { p: need, sel: {} });
+    if (need < 0 && sheetKind === 'discard') closeSheet();
+    if (need >= 0 && sheetKind === 'discard' && sheetState.p !== need) openSheet('discard', { p: need, sel: {} });
+  } else if (sheetKind === 'discard') closeSheet();
+  const rs = responder();
+  if (rs >= 0 && !curtainOn && !sheetKind) openSheet('trade_resp', { p: rs });
+  if (rs < 0 && sheetKind === 'trade_resp') closeSheet();
+  if (rs >= 0 && sheetKind === 'trade_resp' && sheetState.p !== rs) openSheet('trade_resp', { p: rs });
+}
+
+/* ---------- קוד משחק (דחוס) ---------- */
+function toB64(u8) { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
+function fromB64(b) { const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+async function encodeState(st) {
+  const txt = JSON.stringify(st);
+  if (window.CompressionStream) {
+    const cs = new CompressionStream('gzip'), w = cs.writable.getWriter();
+    w.write(new TextEncoder().encode(txt)); w.close();
+    return 'K1.' + toB64(new Uint8Array(await new Response(cs.readable).arrayBuffer()));
+  }
+  return 'K0.' + btoa(unescape(encodeURIComponent(txt)));
+}
+async function decodeState(code) {
+  code = code.trim().replace(/\s+/g, '');
+  let txt;
+  if (code.indexOf('K1.') === 0) {
+    const ds = new DecompressionStream('gzip'), w = ds.writable.getWriter();
+    w.write(fromB64(code.slice(3))); w.close();
+    txt = new TextDecoder().decode(await new Response(ds.readable).arrayBuffer());
+  } else if (code.indexOf('K0.') === 0) txt = decodeURIComponent(escape(atob(code.slice(3))));
+  else throw new Error('קוד לא מוכר');
+  const st = JSON.parse(txt);
+  if (!st || !st.players || !st.hexes || !st.vo) throw new Error('הקוד לא של המשחק הזה');
+  return st;
+}
+
+/* ---------- טיפול בלחיצות ---------- */
+function handle(a, d) {
+  const S = sheetState;
+  switch (a) {
+    /* לובי */
+    case 'lobbyN': lobbyS.n = +d.n; showLobby(); return;
+    case 'dedClose': dedDismiss(); return;
+    case 'startLocal': startLocal(); return;
+    case 'resume': resumeLocal(); return;
+    case 'goOnline': openOnlineChoice(); return;
+    case 'lobbyBack':
+      if (mode === 'online' && onlineStage !== 'choice') {
+        readName();
+        if (unsub) { try { unsub(); } catch (_) {} unsub = null; }
+        gdoc = null; docData = null; mySeat = -1; joinErr = ''; joinBusy = false;
+        onlineStage = 'choice'; showOnlineLobby();
+      } else showLobby();
+      return;
+    case 'onChoiceInvite': readName(); onlineStage = 'create'; showOnlineLobby(); return;
+    case 'onChoiceEnter': readName(); onlineStage = 'enter'; joinErr = ''; joinDigits = ''; showOnlineLobby(); return;
+    case 'onN': readName(); onlineS.n = +d.n; showOnlineLobby(); return;
+    case 'onCreateGo': onlineCreateGo(); return;
+    case 'onJoinGo': onlineJoinGo(); return;
+    case 'onJoin': onlineJoin(+d.i); return;
+    case 'onStartNow': onlineStartNow(); return;
+    case 'copyInvite': {
+      const el = $('#inviteOut');
+      if (!el) return;
+      el.focus(); el.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (_) {}
+      if (!ok && navigator.clipboard) { navigator.clipboard.writeText(el.value).then(() => toast('הקוד הועתק')).catch(() => toast('סמנו והעתיקו ידנית')); return; }
+      toast(ok ? 'הקוד הועתק' : 'סמנו והעתיקו ידנית');
+      return;
+    }
+    /* שכבות */
+    case 'curtainOk': lastViewer = viewer(); curtainOn = false; $('#curtain').classList.add('hidden'); render(); return;
+    case 'winner': openWinner(); return;
+    case 'winClose': $('#winner').classList.add('hidden'); return;
+    /* מצלמה ותפריט */
+    case 'cam': Scene3D.toggleTop(); return;
+    case 'rot': Scene3D.rotate(Math.PI / 3); return;
+    case 'menu': openSheet('menu'); return;
+    case 'costs': openSheet('costs'); return;
+    case 'log': openSheet('log'); return;
+    case 'chat': openSheet('chat'); return;
+    case 'sendChat': { const el = $('#chatIn'); if (el && el.value.trim()) { sendChat(el.value); el.value = ''; drawSheet(); } return; }
+    case 'close': closeSheet(); return;
+    case 'toLobby': showLobby(); return;
+    case 'newAsk': $('#winner').classList.add('hidden'); openSheet('confirmNew'); return;
+    case 'newGo':
+      closeSheet();
+      if (mode === 'online' && gdoc) { G = null; gdoc.delete().catch(() => toast('המחיקה נכשלה')); }
+      else { clearLocal(); showLobby(); }
+      return;
+    case 'codeShow':
+      openSheet('codeShow', { code: '' });
+      encodeState(G).then((c) => { if (sheetKind === 'codeShow') { sheetState.code = c; drawSheet(); } }).catch(() => toast('לא הצלחתי ליצור קוד'));
+      return;
+    case 'codeLoad': openSheet('codeLoad', {}); return;
+    case 'copyCode': {
+      const ta = $('#codeOut');
+      if (!ta) return;
+      ta.focus(); ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (_) {}
+      if (!ok && navigator.clipboard) { navigator.clipboard.writeText(ta.value).then(() => toast('הקוד הועתק')).catch(() => toast('סמנו והעתיקו ידנית')); return; }
+      toast(ok ? 'הקוד הועתק' : 'סמנו והעתיקו ידנית');
+      return;
+    }
+    case 'loadCode': {
+      const ta = $('#codeIn');
+      decodeState(ta ? ta.value : '').then((st) => {
+        closeSheet();
+        mode = 'local'; G = st; lastViewer = -1; armed = null; opts = opts || { hide: true };
+        saveLocal(); hideLobby(); render();
+        toast('המשחק נטען');
+      }).catch((e) => { sheetState.err = e && e.message ? e.message : 'קוד לא תקין'; const inv = ta ? ta.value : ''; drawSheet(); const n = $('#codeIn'); if (n) n.value = inv; });
+      return;
+    }
+    /* פעולות משחק */
+    case 'roll': act({ t: 'roll', d: [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)] }); return;
+    case 'arm': {
+      const k = d.k, C = E.COST[k];
+      if (!E.canAfford(G.players[G.turn].res, C)) { toast('אין מספיק משאבים: ' + costIcons(C)); return; }
+      const ids = k === 'road' ? E.legalRoads(G, G.turn) : k === 'house' ? E.legalHouses(G, G.turn) : E.legalCommunes(G, G.turn);
+      if (!ids.length) { toast(k === 'commune' ? 'אין לך בית לשדרג' : 'אין מקום חוקי לבנייה'); return; }
+      armed = k; render(); return;
+    }
+    case 'unarm': armed = null; selT = null; render(); return;
+    case 'confirmSel': confirmSel(); return;
+    case 'unsel': selT = null; Scene3D.setSelected(null); render(); return;
+    case 'buyDev': act({ t: 'buy_dev' }); return;
+    case 'endTurn': armed = null; act({ t: 'end_turn' }); return;
+    case 'devs': if (viewer() < 0) { toast('אתם צופים במשחק'); return; } openSheet('devs', {}); return;
+    case 'devBack': sheetState = {}; drawSheet(); return;
+    case 'play': {
+      const c = d.c;
+      if (c === 'plenty') { sheetState = { pick: 'plenty', sel: [] }; drawSheet(); return; }
+      if (c === 'monopoly') { sheetState = { pick: 'monopoly' }; drawSheet(); return; }
+      closeSheet();
+      act({ t: 'play_dev', card: c });
+      return;
+    }
+    case 'plentyPick': {
+      S.sel = (S.sel || []).concat([d.r]);
+      if (S.sel.length >= 2) { const s = S.sel; closeSheet(); act({ t: 'play_dev', card: 'plenty', a: s[0], b: s[1] }); } else drawSheet();
+      return;
+    }
+    case 'monoPick': closeSheet(); act({ t: 'play_dev', card: 'monopoly', res: d.r }); return;
+    case 'victim': { const h = S.h; closeSheet(); act({ t: 'robber', h, victim: +d.p, r: Math.random() }); return; }
+    case 'd+': S.sel = S.sel || {}; S.sel[d.r] = (S.sel[d.r] || 0) + 1; drawSheet(); return;
+    case 'd-': S.sel = S.sel || {}; S.sel[d.r] = Math.max(0, (S.sel[d.r] || 0) - 1); drawSheet(); return;
+    case 'dGo': { const p = S.p, sel = S.sel; closeSheet(); act({ t: 'discard', p, res: sel }); return; }
+    /* סחר */
+    case 'trade': openSheet('trade', { tab: 'bank', give: null, get: null, pg: {}, pw: {}, to: -1 }); return;
+    case 'tab': S.tab = d.v; drawSheet(); return;
+    case 'bGive': S.give = d.r; if (S.get === d.r) S.get = null; drawSheet(); return;
+    case 'bGet': S.get = d.r; drawSheet(); return;
+    case 'bGo': { const g = S.give, t = S.get; if (act({ t: 'bank_trade', give: g, get: t })) { S.give = null; S.get = null; drawSheet(); toast('הסחר בוצע'); } return; }
+    case 'pg+': S.pg[d.r] = (S.pg[d.r] || 0) + 1; S.pw[d.r] = 0; drawSheet(); return;
+    case 'pg-': S.pg[d.r] = Math.max(0, (S.pg[d.r] || 0) - 1); drawSheet(); return;
+    case 'pw+': S.pw[d.r] = (S.pw[d.r] || 0) + 1; S.pg[d.r] = 0; drawSheet(); return;
+    case 'pw-': S.pw[d.r] = Math.max(0, (S.pw[d.r] || 0) - 1); drawSheet(); return;
+    case 'to': S.to = +d.i; drawSheet(); return;
+    case 'offer': { const g = S.pg, w = S.pw, to = S.to; closeSheet(); if (act({ t: 'offer_trade', give: g, get: w, to })) toast('ההצעה נשלחה'); return; }
+    case 'cancelTrade': act({ t: 'cancel_trade' }); return;
+    case 'accept': { const p = S.p; closeSheet(); if (act({ t: 'respond_trade', p, accept: true })) toast('הסחר בוצע'); return; }
+    case 'decline': { const p = S.p; closeSheet(); act({ t: 'respond_trade', p, accept: false }); return; }
+  }
+}
+document.addEventListener('click', (e) => {
+  if (e.target.id === 'sheetWrap' && sheetKind && sheetKind !== 'discard' && sheetKind !== 'trade_resp') { closeSheet(); return; }
+  const t = e.target.closest('[data-act]');
+  if (!t || t.disabled) return;
+  handle(t.dataset.act, t.dataset);
+});
+document.addEventListener('input', (e) => {
+  const t = e.target;
+  if (t.dataset && t.dataset.name !== undefined) lobbyS.names[+t.dataset.name] = t.value;
+  if (t.id === 'chkHide') lobbyS.hide = t.checked;
+  if (t.id === 'codeDigits') {
+    const digits = t.value.replace(/\D/g, '').slice(0, 6);
+    if (digits !== t.value) t.value = digits;
+    joinDigits = digits; joinErr = '';
+    const btn = document.querySelector('[data-act=onJoinGo]');
+    if (btn) btn.disabled = digits.length !== 6;
+  }
+});
+document.addEventListener('change', (e) => { if (e.target.id === 'chkHide') lobbyS.hide = e.target.checked; });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target && e.target.id === 'chatIn') { e.preventDefault(); handle('sendChat', {}); }
+  if (e.key === 'Enter' && e.target && e.target.id === 'codeDigits' && joinDigits.length === 6) { e.preventDefault(); handle('onJoinGo', {}); }
+});
+
+/* ---------- אתחול ---------- */
+function boot() {
+  try { Scene3D.init($('#gl')); } catch (e) {
+    console.error(e);
+    showOverlay('<div class="lobby"><h1>אופס</h1><p class="sub">לא הצלחתי להפעיל את הלוח בדפדפן הזה.</p></div>');
+    return;
+  }
+  Scene3D.onTap = onBoardTap;
+  const fr = document.querySelector('#fabs [data-act=rot]'), fc = document.querySelector('#fabs [data-act=costs]'), fm = document.querySelector('#fabs [data-act=menu]');
+  if (fr) fr.innerHTML = I('rotate');
+  if (fc) fc.innerHTML = I('list');
+  if (fm) fm.innerHTML = I('menu');
+  showLobby();
+  initCaps();
+}
+window.__k = { act, tap: onBoardTap, state: () => G };
+boot();
+})();
+
+</script>
+</body>
+</html>
